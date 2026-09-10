@@ -1,0 +1,12 @@
+{
+  "name": "@es-trading/market",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@es-trading/indicators": "*",
+    "@es-trading/risk": "*",
+    "@es-trading/shared": "*",
+    "@es-trading/strategy": "*"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "@es-trading/engine",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "simulate": "tsx src/simulate.ts"
+  },
+  "dependencies": {
+    "@es-trading/levels": "*",
+    "@es-trading/database": "*",
+    "@es-trading/logging": "*",
+    "@es-trading/simulation": "*",
+    "@es-trading/shared": "*",
+    "dotenv": "^16.4.7",
+    "tsx": "^4.19.2"
+  }
+}

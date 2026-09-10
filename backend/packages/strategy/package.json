@@ -1,0 +1,7 @@
+{
+  "name": "@es-trading/strategy",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": { "@es-trading/shared": "*", "@es-trading/levels": "*", "@es-trading/indicators": "*" }
+}

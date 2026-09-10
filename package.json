@@ -1,0 +1,35 @@
+{
+  "name": "es-trading-bot",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@11",
+  "workspaces": ["frontend", "backend/apps/*", "backend/packages/*"],
+  "scripts": {
+    "dev": "npm run dev -w @es-trading/dashboard",
+    "dev:engine": "npm run dev -w @es-trading/engine",
+    "dev:backend": "npm run dev -w @es-trading/engine",
+    "backend": "npm run start -w @es-trading/engine",
+    "simulate": "npm run simulate -w @es-trading/engine",
+    "build": "npm run build -w @es-trading/dashboard",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/ws": "^8.5.13",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^9.16.0",
+    "eslint-config-next": "^15.1.0",
+    "prettier": "^3.4.2",
+    "@tailwindcss/postcss": "^4.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
