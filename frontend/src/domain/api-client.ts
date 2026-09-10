@@ -19,7 +19,7 @@ import { z } from 'zod';
 import type { DashboardData, Level, MarketSnapshot } from './types';
 
 const fixtureSchema = z.object({ id: z.string(), name: z.string(), description: z.string() });
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = globalThis.process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 export type SimulationFixture = z.infer<typeof fixtureSchema>;
 

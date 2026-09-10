@@ -23,7 +23,7 @@ function mongoUriFromCredentialsFile(): string | undefined {
 }
 
 async function start(): Promise<void> {
-	const port = globalThis.process.env.API_PORT ?? '3001';
+	const port = globalThis.process.env.PORT ?? globalThis.process.env.API_PORT ?? '3001';
 	const uri = globalThis.process.env.MONGODB_URI ?? mongoUriFromCredentialsFile();
 	let services;
 	if (!uri) {
