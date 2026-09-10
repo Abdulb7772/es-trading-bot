@@ -8,6 +8,7 @@
     "dev": "npm run dev -w @es-trading/dashboard",
     "dev:engine": "npm run dev -w @es-trading/engine",
     "dev:backend": "npm run dev -w @es-trading/engine",
+    "start": "npm run start -w @es-trading/engine",
     "backend": "npm run start -w @es-trading/engine",
     "simulate": "npm run simulate -w @es-trading/engine",
     "build": "npm run build -w @es-trading/dashboard",
