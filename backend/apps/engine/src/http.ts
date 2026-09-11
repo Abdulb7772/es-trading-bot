@@ -25,7 +25,7 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
 
 function send(response: ServerResponse, status: number, payload: unknown): void {
   response.statusCode = status;
-  response.setHeader('access-control-allow-origin', globalThis.process.env.FRONTEND_URL ?? 'http://localhost:3000');
+  response.setHeader('access-control-allow-origin', globalThis.process.env.FRONTEND_URL ?? '*');
   response.setHeader('access-control-allow-methods', 'GET,POST,PUT,OPTIONS');
   response.setHeader('access-control-allow-headers', 'content-type');
   response.setHeader('vary', 'Origin');
@@ -45,7 +45,7 @@ export function createApiServer(options: ApiServerOptions = {}): Server {
       const path = new globalThis.URL(request.url ?? '/', 'http://localhost').pathname;
       if (method === 'OPTIONS') {
         response.statusCode = 204;
-        response.setHeader('access-control-allow-origin', globalThis.process.env.FRONTEND_URL ?? 'http://localhost:3000');
+        response.setHeader('access-control-allow-origin', globalThis.process.env.FRONTEND_URL ?? '*');
         response.setHeader('access-control-allow-methods', 'GET,POST,PUT,OPTIONS');
         response.setHeader('access-control-allow-headers', 'content-type');
         response.setHeader('vary', 'Origin');
@@ -76,7 +76,7 @@ export function createApiServer(options: ApiServerOptions = {}): Server {
   });
 }
 
-export async function listenApiServer(server: Server, port = 3001): Promise<Server> {
+export async function listenApiServer(server: Server, port = 3001, host = globalThis.process.env.HOST ?? '0.0.0.0'): Promise<Server> {
   await new Promise<void>((resolve, reject) => {
     const handleError = (error: Error) => {
       server.off('listening', handleListening);
@@ -88,7 +88,7 @@ export async function listenApiServer(server: Server, port = 3001): Promise<Serv
     };
     server.once('error', handleError);
     server.once('listening', handleListening);
-    server.listen(port);
+    server.listen(port, host);
   });
   return server;
 }

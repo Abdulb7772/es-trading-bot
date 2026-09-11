@@ -19,7 +19,7 @@ import { z } from 'zod';
 import type { DashboardData, Level, MarketSnapshot } from './types';
 
 const fixtureSchema = z.object({ id: z.string(), name: z.string(), description: z.string() });
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? (process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : '');
 
 export type SimulationFixture = z.infer<typeof fixtureSchema>;
 
@@ -54,7 +54,7 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: ApiRequestI
 
 export function apiErrorMessage(error: unknown): string {
   if (error instanceof ApiError) return `Backend request failed (${error.status}): ${error.message}`;
-  return 'The local backend is unavailable. Start the engine with API_PORT=3001 and try again.';
+  return 'The backend is unavailable. Check that the backend service is running and configured correctly.';
 }
 
 const tradeSchema = z.object({ id: z.string(), time: z.string(), side: z.enum(['long', 'short']), entry: z.number(), exit: z.number().optional(), contracts: z.number(), pnl: z.number(), status: z.enum(['open', 'closed']) });
