@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { z } from 'zod';
+import { LevelValidationError } from '@es-trading/levels';
 import { createBackendApplicationServices, healthSchema, levelsRequestSchema, type BackendApplicationServices } from './services';
 import { fixtureSchema, levelsValidationSchema } from './services';
 import {
@@ -61,6 +62,7 @@ export function createApiServer(options: ApiServerOptions = {}): Server {
       if (method === 'PUT' && path === '/api/config') return respondDto(response, 200, strategyConfigContractSchema, services.updateConfig(await readJson(request)));
       if (method === 'GET' && path === '/api/levels') return respondDto(response, 200, levelSetSchema, services.getLevels());
       if (method === 'PUT' && path === '/api/levels') return respondDto(response, 200, levelSetSchema, services.updateLevels(await readJson(request)));
+      if (method === 'POST' && path === '/api/levels/import') return respondDto(response, 200, levelSetSchema, services.updateLevelsText(await readJson(request)));
       if (method === 'POST' && path === '/api/levels/validate') return respondDto(response, 200, levelsValidationSchema, services.validateLevels(await readJson(request)));
       if (method === 'GET' && path === '/api/evaluations') return send(response, 200, services.getEvaluations());
       if (method === 'GET' && path.startsWith('/api/evaluations/')) { const value = services.getEvaluation(path.split('/').pop() ?? ''); return value ? send(response, 200, value) : send(response, 404, { error: 'Evaluation not found.' }); }
@@ -72,7 +74,7 @@ export function createApiServer(options: ApiServerOptions = {}): Server {
       if (method === 'POST' && path === '/api/simulator/run') { const body: SimulationRequest = simulationRequestSchema.parse(await readJson(request)); return respondDto(response, 200, simulationResultSchema, await services.runSimulation(body)); }
       return send(response, 404, { error: 'Route not found.' });
     } catch (error) {
-      const status = error instanceof z.ZodError ? 400 : 500;
+      const status = error instanceof z.ZodError || error instanceof LevelValidationError ? 400 : 500;
       return send(response, status, { error: error instanceof Error ? error.message : 'Request failed.', issues: error instanceof z.ZodError ? error.issues : undefined });
     }
   });

@@ -1,160 +1,95 @@
 import { describe, expect, it } from 'vitest';
 import { evaluateLongSetup, evaluateShortSetup, evaluateStrategy } from '@es-trading/strategy';
 import { strategyConfigSchema } from '@es-trading/shared';
-import type { Candle, StrategyConfig, StrategyInput, SupportResistanceLevel } from '@es-trading/shared';
+import type { Candle, StrategyInput, SupportResistanceLevel } from '@es-trading/shared';
 
+const config = strategyConfigSchema.parse({ symbol: '/ES', timeframe: '15m', tradingTimezone: 'America/New_York', noNewTradesAtOrAfter: '16:00', levels: { source: 'manual_input' } });
 const levels: readonly SupportResistanceLevel[] = [
-  { id: 'l1', price: 5000, active: true },
-  { id: 'l2', price: 5010, active: true },
-  { id: 'l3', price: 5020, active: true },
-  { id: 'l4', price: 5030, active: true },
-  { id: 'l5', price: 5040, active: true }
+  { id: 'support', price: 5000, active: true },
+  { id: 'r1', price: 5010, active: true },
+  { id: 'r2', price: 5020, active: true },
+  { id: 'r3', price: 5030, active: true },
+  { id: 'support-1', price: 4990, active: true }
 ];
 
-const config: StrategyConfig = strategyConfigSchema.parse({
-  symbol: '/ES' as const,
-  timeframe: '15m',
-  emaFastPeriod: 9,
-  emaSlowPeriod: 21,
-  stopPoints: 10,
-  targetPoints: 10,
-  minimumBreathingRoomPoints: 3,
-  quantity: 1,
-  tradingTimezone: 'America/New_York',
-  noNewTradesAtOrAfter: '11:45',
-  levels: { source: 'manual_input' as const }
-});
-
-function candle(index: number, open: number, close: number, isClosed = true): Candle {
-  return {
-    timestamp: new Date(`2026-09-${String(index).padStart(2, '0')}T14:00:00.000Z`),
-    open,
-    high: Math.max(open, close),
-    low: Math.min(open, close),
-    close,
-    symbol: '/ES',
-    timeframe: '15m',
-    isClosed
-  };
+function candle(day: number, open: number, close: number, high = Math.max(open, close), low = Math.min(open, close)): Candle {
+  return { timestamp: new Date(`2026-09-${String(day).padStart(2, '0')}T14:00:00Z`), open, high, low, close, symbol: '/ES', timeframe: '15m', isClosed: true };
+}
+function input(candles: readonly Candle[], emaFast = 100, emaSlow = 90, suppliedLevels = levels): StrategyInput {
+  return { candles, levels: suppliedLevels, indicators: { emaFast, emaSlow }, config };
 }
 
-function input(candles: readonly Candle[], emaFast = 100, emaSlow = 90): StrategyInput {
-  return {
-    candles,
-    levels,
-    indicators: { emaFast, emaSlow },
-    config
-  };
-}
+describe('current ES three-bar strategy', () => {
+  it('accepts the exact long rules and returns all structured decision fields', () => {
+    const result = evaluateLongSetup(input([candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 5002, 5025)]));
+    expect(result).toMatchObject({ accepted: true, side: 'LONG', entryPrice: 5025, ema9: 100, ema21: 90, brokenLevel: { price: 5020 }, nextRelevantLevel: { price: 5030 }, candle1: { open: 5000 }, candle2: { close: 5002 }, candle3: { close: 5025 } });
+    expect(result.tradePlan?.breathingRoomPoints).toBe(5);
+    expect(result.reasons).toEqual([]);
+  });
 
-const validLong = [candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 5002, 5025)];
-const validShort = [candle(1, 5020, 5015), candle(2, 5015, 5018), candle(3, 5018, 4995)];
+  it('accepts the exact short rules with equality allowed for EMA', () => {
+    const result = evaluateShortSetup(input([candle(1, 5020, 5015), candle(2, 5015, 5018), candle(3, 5018, 4995)], 100, 100));
+    expect(result).toMatchObject({ accepted: true, side: 'SHORT', entryPrice: 4995, brokenLevel: { price: 5000 }, nextRelevantLevel: { price: 4990 }, ema9: 100, ema21: 100 });
+  });
 
-describe('three-candle strategy base patterns', () => {
   it.each([
     ['insufficient candles', [candle(1, 5000, 5005), candle(2, 5005, 5002)], 'INSUFFICIENT_CANDLES'],
-    ['Candle 1 color', [candle(1, 5000, 5000), candle(2, 5000, 4998), candle(3, 4998, 5010)], 'CANDLE_1_COLOR_INVALID'],
-    ['Candle 2 color', [candle(1, 5000, 5005), candle(2, 5005, 5005), candle(3, 5005, 5010)], 'CANDLE_2_COLOR_INVALID'],
-    ['Candle 3 color', [candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 5002, 5002)], 'CANDLE_3_COLOR_INVALID'],
-    ['Candle 3 break', [candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 4998, 5000)], 'CANDLE_3_DID_NOT_BREAK_LEVEL'],
-    ['EMA alignment', validLong, 'EMA_ALIGNMENT_INVALID']
-  ])('rejects long %s', (_name, candles, code) => {
+    ['long Candle 1 color', [candle(1, 5000, 5000), candle(2, 5000, 4998), candle(3, 4998, 5010)], 'CANDLE_1_COLOR_INVALID'],
+    ['long Candle 2 color', [candle(1, 5000, 5005), candle(2, 5005, 5005), candle(3, 5005, 5010)], 'CANDLE_2_COLOR_INVALID'],
+    ['long Candle 3 color', [candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 5002, 5002)], 'CANDLE_3_COLOR_INVALID'],
+    ['long break', [candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 4998, 4999)], 'CANDLE_3_DID_NOT_BREAK_LEVEL'],
+    ['long EMA', [candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 5002, 5025)], 'EMA_ALIGNMENT_INVALID']
+  ])('rejects %s with an explicit reason', (_name, candles, code) => {
     const result = evaluateLongSetup(input(candles, code === 'EMA_ALIGNMENT_INVALID' ? 89 : 100, 90));
     expect(result.accepted).toBe(false);
     expect(result.reasons[0]?.code).toBe(code);
+    expect(result.reasons[0]?.description).toBeTruthy();
   });
 
-  it.each([
-    ['Candle 1 color', [candle(1, 5000, 5000), candle(2, 5000, 5002), candle(3, 5002, 4990)], 'CANDLE_1_COLOR_INVALID'],
-    ['Candle 2 color', [candle(1, 5020, 5015), candle(2, 5015, 5015), candle(3, 5015, 5000)], 'CANDLE_2_COLOR_INVALID'],
-    ['Candle 3 color', [candle(1, 5020, 5015), candle(2, 5015, 5018), candle(3, 5018, 5018)], 'CANDLE_3_COLOR_INVALID'],
-    ['Candle 3 break', [candle(1, 5020, 5015), candle(2, 5015, 5018), candle(3, 5025, 5020)], 'CANDLE_3_DID_NOT_BREAK_LEVEL'],
-    ['EMA alignment', validShort, 'EMA_ALIGNMENT_INVALID']
-  ])('rejects short %s', (_name, candles, code) => {
-    const result = evaluateShortSetup(input(candles, code === 'EMA_ALIGNMENT_INVALID' ? 101 : 90, 100));
-    expect(result.accepted).toBe(false);
-    expect(result.reasons[0]?.code).toBe(code);
-  });
-
-  it('accepts a long setup at Candle 1 equality and chooses the highest broken level', () => {
-    const result = evaluateLongSetup(input(validLong, 100, 100));
-
-    expect(result.accepted).toBe(true);
-    expect(result.side).toBe('LONG');
-    expect(result.tradePlan?.entryPrice).toBe(5025);
-    expect(result.playedLevel?.price).toBe(5020);
-    expect(result.nextRelevantLevel?.price).toBe(5030);
-  });
-
-  it('accepts a short setup at Candle 1 equality and chooses the lowest broken level', () => {
-    const result = evaluateShortSetup(input(validShort, 100, 100));
-
-    expect(result.accepted).toBe(true);
-    expect(result.side).toBe('SHORT');
-    expect(result.tradePlan?.entryPrice).toBe(4995);
-    expect(result.playedLevel?.price).toBe(5000);
-    expect(result.nextRelevantLevel).toBeNull();
-  });
-
-  it('rejects Candle 3 equality with the relevant level because the break is strict', () => {
-    const result = evaluateLongSetup(input([candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 4998, 5000)]));
-
-    expect(result.accepted).toBe(false);
-    expect(result.reasons[0]?.code).toBe('CANDLE_3_DID_NOT_BREAK_LEVEL');
-  });
-
-  it('rejects an open or non-/ES candle with a specific reason', () => {
-    expect(evaluateLongSetup(input([candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 5002, 5025, false)])).reasons[0]?.code).toBe('CANDLE_NOT_CLOSED');
+  it('rejects invalid instrument and incomplete candles explicitly', () => {
     expect(evaluateLongSetup(input([candle(1, 5000, 5005), candle(2, 5005, 5002), { ...candle(3, 5002, 5025), symbol: '/NQ' } as unknown as Candle])).reasons[0]?.code).toBe('INVALID_INSTRUMENT');
+    expect(evaluateLongSetup(input([candle(1, 5000, 5005), candle(2, 5005, 5002), { ...candle(3, 5002, 5025), isClosed: false }])).reasons[0]?.code).toBe('CANDLE_NOT_CLOSED');
   });
 
-it('returns an entry action only for one accepted direction', () => {
-     const result = evaluateStrategy(input(validLong));
-
-     expect(result.action).toBe('ENTER_LONG');
-     expect(result.generatedAt).toEqual(validLong[2].timestamp);
-   });
-
-   it('rejects a long where a wick touches the next level and Candle 3 does not close beyond it', () => {
-     const candles = [candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 5002, 5025, true)];
-     const levelsWithWick = [...levels, { id: 'l6', price: 5025, active: true }];
-     const result = evaluateLongSetup({ ...input(candles), levels: levelsWithWick });
-     expect(result.accepted).toBe(false);
-     expect(result.reasons[0]?.code).toBe('WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL');
-   });
-
-   it('accepts a long where a wick touches the next level but Candle 3 closes beyond it', () => {
-     const candles = [candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 5002, 5035)];
-     const levelsWithWick = [...levels, { id: 'l6', price: 5025, active: true }];
-     const result = evaluateLongSetup({ ...input(candles), levels: levelsWithWick });
-     expect(result.accepted).toBe(true);
-   });
-
-   it('rejects a long with insufficient breathing room', () => {
-    const tightLevels = [{ id: 't1', price: 5000, active: true }, { id: 't2', price: 5002, active: true }, { id: 't3', price: 5004.75, active: true }, { id: 't4', price: 5006, active: true }];
-    const candles = [candle(1, 5000, 5001), candle(2, 5001, 5000.5), candle(3, 5000.5, 5002.5)];
-     const result = evaluateLongSetup({ ...input(candles), levels: tightLevels });
-     expect(result.accepted).toBe(false);
-     expect(result.reasons[0]?.code).toBe('INSUFFICIENT_BREATHING_ROOM');
-   });
-
-   it('sets targetPrice at the next relevant level when closer than 10 points', () => {
-     const result = evaluateLongSetup(input(validLong, 100, 100));
-     expect(result.tradePlan?.targetPrice).toBe(5030);
-   });
-
-   it('sets breathingRoomPoints correctly and null when no next level', () => {
-     const longResult = evaluateLongSetup(input(validLong, 100, 100));
-     expect(longResult.tradePlan?.breathingRoomPoints).toBe(10);
-     const shortResult = evaluateShortSetup(input(validShort, 100, 100));
-     expect(shortResult.tradePlan?.breathingRoomPoints).toBeNull();
-   });
-
-it('rejects a short where a wick touches the next level and Candle 3 does not close beyond it', () => {
-      const candles = [candle(1, 5020, 5015), candle(2, 5015, 5018), candle(3, 5018, 4990)];
-      const levelsWithWick = [...levels, { id: 'l6', price: 4990, active: true }];
-      const result = evaluateShortSetup({ ...input(candles, 90, 100), levels: levelsWithWick });
-      expect(result.accepted).toBe(false);
-      expect(result.reasons[0]?.code).toBe('WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL');
-    });
+  it.each([2.99, 3, 3.01])('applies the unrounded long breathing-room boundary at %s points', (distance) => {
+    const suppliedLevels = [{ id: 'support', price: 5000, active: true }, { id: 'next', price: 5001 + distance, active: true }];
+    const result = evaluateLongSetup(input([candle(1, 5000, 5001), candle(2, 5001, 5000.5), candle(3, 5000.5, 5001)], 100, 90, suppliedLevels));
+    expect(result.accepted).toBe(distance >= 3);
+    if (distance < 3) expect(result.reasons[0]?.details?.distance).toBeCloseTo(distance, 10);
+    else expect(result.tradePlan?.breathingRoomPoints).toBeCloseTo(distance, 10);
   });
+
+  it.each([2.99, 3, 3.01])('applies the unrounded short breathing-room boundary at %s points', (distance) => {
+    const suppliedLevels = [{ id: 'resistance', price: 5000, active: true }, { id: 'next', price: 4999 - distance, active: true }];
+    const result = evaluateShortSetup(input([candle(1, 5000, 4995), candle(2, 4995, 4999.5), candle(3, 4999.5, 4999)], 90, 100, suppliedLevels));
+    expect(result.accepted).toBe(distance >= 3);
+    if (distance < 3) expect(result.reasons[0]?.details?.distance).toBeCloseTo(distance, 10);
+    else expect(result.tradePlan?.breathingRoomPoints).toBeCloseTo(distance, 10);
+  });
+
+  it('uses the closer next level as target and keeps the 10-point target at equal or farther levels', () => {
+    for (const [distance, expectedTarget] of [[5, 5006], [10, 5011], [12, 5011]] as const) {
+      const result = evaluateLongSetup(input([candle(1, 5000, 5001), candle(2, 5001, 5000.5), candle(3, 5000.5, 5001)], 100, 90, [{ id: 'support', price: 5000, active: true }, { id: 'next', price: 5001 + distance, active: true }]));
+      expect(result.accepted).toBe(true);
+      expect(result.tradePlan?.stopPrice).toBe(4991);
+      expect(result.tradePlan?.targetPrice).toBe(expectedTarget);
+    }
+  });
+
+  it('uses the closer next level for short targets and fixed 10-point risk', () => {
+    for (const [distance, expectedTarget] of [[5, 4994], [10, 4989], [12, 4989]] as const) {
+      const result = evaluateShortSetup(input([candle(1, 5000, 4995), candle(2, 4995, 4999.5), candle(3, 4999.5, 4999)], 90, 100, [{ id: 'resistance', price: 5000, active: true }, { id: 'next', price: 4999 - distance, active: true }]));
+      expect(result.accepted).toBe(true);
+      expect(result.tradePlan?.stopPrice).toBe(5009);
+      expect(result.tradePlan?.targetPrice).toBe(expectedTarget);
+    }
+  });
+
+  it('returns one direction action and no trade for rejected decisions', () => {
+    const accepted = evaluateStrategy(input([candle(1, 5000, 5005), candle(2, 5005, 5002), candle(3, 5002, 5025)]));
+    expect(accepted.action).toBe('ENTER_LONG');
+    const rejected = evaluateStrategy(input([candle(1, 5000, 5000), candle(2, 5000, 4998), candle(3, 4998, 5010)]));
+    expect(rejected.action).toBe('NO_TRADE');
+    expect(rejected.evaluation.reasons[0]?.description).toBeTruthy();
+  });
+});

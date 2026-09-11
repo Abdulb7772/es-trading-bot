@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   LevelValidationError,
   distanceInPoints,
@@ -11,6 +13,10 @@ import {
   findNearestLowerLevel,
   findNextLevelAbove,
   findNextLevelBelow,
+  findRelevantResistance,
+  findRelevantSupport,
+  relevantResistance,
+  relevantSupport,
   normalizeLevels,
   parseLevelsFromCsv,
   parseLevelsFromJson,
@@ -32,6 +38,16 @@ describe('levels', () => {
     expect(parseLevelsFromText('5020\n5000\n5010\n')).toEqual([5000, 5010, 5020]);
   });
 
+  it('loads all 90 supplied ES fixture prices from one-price-per-line text', () => {
+    const fixture = readFileSync(resolve(process.cwd(), 'backend/tests/fixtures/es-levels-90.txt'), 'utf8');
+    const parsed = parseLevelsFromText(fixture);
+    expect(parsed).toHaveLength(90);
+    expect(parsed).toEqual([...parsed].sort((left, right) => left - right));
+    expect(() => validateLevelCount(parsed)).not.toThrow();
+    expect(parsed[0]).toBe(6387.25);
+    expect(parsed.at(-1)).toBe(7838.5);
+  });
+
   it('parses a CSV price column without assigning permanent support/resistance labels', () => {
     expect(parseLevelsFromCsv('label,price\nupper,5020\nlower,5000')).toEqual([5000, 5020]);
   });
@@ -39,6 +55,7 @@ describe('levels', () => {
   it('rejects malformed values, malformed JSON, missing CSV price columns, and invalid ticks', () => {
     expect(() => normalizeLevels([5000.1])).toThrow(LevelValidationError);
     expect(() => normalizeLevels(['not-a-number'])).toThrow(/numeric/);
+    expect(() => parseLevelsFromText('5000\nnot-a-number\n5010')).toThrow(/line 2/);
     expect(() => parseLevelsFromJson('{')).toThrow(/Invalid JSON/);
     expect(() => parseLevelsFromCsv('level\n5000')).toThrow(/price column/);
     expect(() => parseLevelsFromCsv('price\n5000.1')).toThrow(/tick size/);
@@ -59,6 +76,12 @@ describe('levels', () => {
     expect(findLevelAtOrAbove(levels, 5015)).toBe(5020);
     expect(findNextLevelAbove(levels, 5010)).toBe(5020);
     expect(findNextLevelBelow(levels, 5010)).toBe(5000);
+    expect(relevantSupport(levels, 5015)).toBe(5010);
+    expect(relevantResistance(levels, 5015)).toBe(5020);
+    expect(relevantSupport(levels, 5010)).toBe(5000);
+    expect(relevantResistance(levels, 5010)).toBe(5020);
+    expect(findRelevantSupport(levels, 5015)).toBe(5010);
+    expect(findRelevantResistance(levels, 5015)).toBe(5020);
   });
 
   it('finds levels between prices with explicit boundary behavior', () => {

@@ -148,10 +148,17 @@ export function parseLevelsFromText(
     throw new LevelValidationError('Plain-text levels must be a string.', input);
   }
 
-  const values = input
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+  const values: string[] = [];
+  for (const [index, line] of input.split(/\r?\n/).entries()) {
+    const value = line.trim();
+    if (!value) continue;
+    try {
+      normalizeLevels([value], options);
+      values.push(value);
+    } catch (error) {
+      throw new LevelValidationError(`Invalid level on line ${index + 1}: ${error instanceof Error ? error.message : String(error)}`, value, index + 1);
+    }
+  }
   return normalizeLevels(values, options);
 }
 
@@ -199,6 +206,17 @@ export function findNearestLowerLevel(levels: readonly number[], price: number):
 export function findNearestHigherLevel(levels: readonly number[], price: number): number | undefined {
   return levels.find((level) => level > price);
 }
+
+export function relevantSupport(levels: readonly number[], price: number): number | undefined {
+  return findNearestLowerLevel(levels, price);
+}
+
+export function relevantResistance(levels: readonly number[], price: number): number | undefined {
+  return findNearestHigherLevel(levels, price);
+}
+
+export const findRelevantSupport = relevantSupport;
+export const findRelevantResistance = relevantResistance;
 
 export function findLevelsBetween(
   levels: readonly number[],

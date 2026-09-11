@@ -1,0 +1,180 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Users/abdul/Desktop/es-trading-bot[39m
+
+ [32m✓[39m backend/tests/unit/strategy.test.ts [2m([22m[2m18 tests[22m[2m)[22m[90m 22[2mms[22m[39m
+ [31m❯[39m backend/tests/qa/deterministic-qa-suite.test.ts [2m([22m[2m13 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[90m 183[2mms[22m[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-003: rejects long Candle 3 color[90m 11[2mms[22m[31m[39m
+[31m     → expected 'CANDLE_2_COLOR_INVALID' to be 'CANDLE_3_COLOR_INVALID' // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-004: accepts valid long with all green candles[90m 7[2mms[22m[31m[39m
+[31m     → expected false to be true // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-005: rejects long break - C3 did not close beyond level[90m 6[2mms[22m[31m[39m
+[31m     → expected 'CANDLE_2_COLOR_INVALID' to be 'CANDLE_3_DID_NOT_BREAK_LEVEL' // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-007: rejects long EMA alignment invalid[90m 3[2mms[22m[31m[39m
+[31m     → expected 'CANDLE_2_COLOR_INVALID' to be 'EMA_ALIGNMENT_INVALID' // Object.is equality[39m
+ [32m✓[39m backend/tests/integration/end-to-end-practice.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 391[2mms[22m[39m
+   [33m[2m✓[22m[39m complete local practice path[2m > [22mconnects API, market runtime, EMA, levels, strategy, execution, protection, exit, P/L, lockout, and dashboard APIs [33m382[2mms[22m[39m
+ [31m❯[39m backend/tests/integration/wick-rule-matrix.test.ts [2m([22m[2m14 tests[22m[2m | [22m[31m10 failed[39m[2m)[22m[90m 48[2mms[22m[39m
+[31m   [31m×[31m LONG wick rule deterministic test[2m > [22m1: C1 wick touches next, C3 not close beyond[90m 23[2mms[22m[31m[39m
+[31m     → expected 'ACCEPTED' to be 'REJECTED' // Object.is equality[39m
+[31m   [31m×[31m LONG wick rule deterministic test[2m > [22m2: C2 wick touches next, C3 not close beyond[90m 2[2mms[22m[31m[39m
+[31m     → expected 'ACCEPTED' to be 'REJECTED' // Object.is equality[39m
+[31m   [31m×[31m LONG wick rule deterministic test[2m > [22m3: C3 wick touches next, C3 not close beyond[90m 2[2mms[22m[31m[39m
+[31m     → expected 'ACCEPTED' to be 'REJECTED' // Object.is equality[39m
+[31m   [31m×[31m LONG wick rule deterministic test[2m > [22m4: C3 closes beyond touched level[90m 3[2mms[22m[31m[39m
+[31m     → expected 'REJECTED:INSUFFICIENT_BREATHING_ROOM' to be 'ACCEPTED' // Object.is equality[39m
+[31m   [31m×[31m LONG wick rule deterministic test[2m > [22m7: C3 wick 3rd, close between 2nd/3rd[90m 3[2mms[22m[31m[39m
+[31m     → expected 'REJECTED:INSUFFICIENT_BREATHING_ROOM' to be 'REJECTED' // Object.is equality[39m
+[31m   [31m×[31m LONG wick rule deterministic test[2m > [22m8: Wick exactly touches level[90m 2[2mms[22m[31m[39m
+[31m     → expected 'ACCEPTED' to be 'REJECTED' // Object.is equality[39m
+[31m   [31m×[31m LONG wick rule deterministic test[2m > [22m9: C3 closes exactly at level[90m 2[2mms[22m[31m[39m
+[31m     → expected 'REJECTED:INSUFFICIENT_BREATHING_ROOM' to be 'REJECTED' // Object.is equality[39m
+[31m   [31m×[31m SHORT wick rule deterministic test[2m > [22m10: Short C1 wick touches next[90m 2[2mms[22m[31m[39m
+[31m     → expected 'ACCEPTED' to be 'REJECTED' // Object.is equality[39m
+[31m   [31m×[31m SHORT wick rule deterministic test[2m > [22m11: Short C2 wick touches next[90m 2[2mms[22m[31m[39m
+[31m     → expected 'ACCEPTED' to be 'REJECTED' // Object.is equality[39m
+[31m   [31m×[31m SHORT wick rule deterministic test[2m > [22m12: Short C3 wick touches next[90m 2[2mms[22m[31m[39m
+[31m     → expected 'ACCEPTED' to be 'REJECTED' // Object.is equality[39m
+ [32m✓[39m backend/tests/unit/risk.test.ts [2m([22m[2m14 tests[22m[2m)[22m[90m 92[2mms[22m[39m
+ [32m✓[39m backend/tests/integration/topstepx-es-only.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 19[2mms[22m[39m
+ [32m✓[39m backend/tests/unit/levels.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 42[2mms[22m[39m
+ [32m✓[39m backend/tests/integration/runtime-recovery.test.ts [2m([22m[2m9 tests[22m[2m)[22m[90m 16[2mms[22m[39m
+ [32m✓[39m backend/tests/integration/http-api.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 562[2mms[22m[39m
+   [33m[2m✓[22m[39m local backend HTTP API[2m > [22mserves health and read-only application DTOs [33m353[2mms[22m[39m
+ [32m✓[39m backend/tests/integration/market-runtime.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 98[2mms[22m[39m
+ [32m✓[39m backend/tests/unit/indicators.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 17[2mms[22m[39m
+ [32m✓[39m backend/tests/integration/simulation-engine.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 165[2mms[22m[39m
+ [32m✓[39m backend/tests/unit/domain-validation.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 25[2mms[22m[39m
+ [32m✓[39m backend/tests/integration/first-loss-entry-gating.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 13[2mms[22m[39m
+ [32m✓[39m backend/tests/integration/strategy-pipeline.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 12[2mms[22m[39m
+ [32m✓[39m backend/tests/unit/architecture.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 4[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 14 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/integration/wick-rule-matrix.test.ts[2m > [22mLONG wick rule deterministic test[2m > [22m1: C1 wick touches next, C3 not close beyond
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/integration/wick-rule-matrix.test.ts[2m > [22mLONG wick rule deterministic test[2m > [22m2: C2 wick touches next, C3 not close beyond
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/integration/wick-rule-matrix.test.ts[2m > [22mLONG wick rule deterministic test[2m > [22m3: C3 wick touches next, C3 not close beyond
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/integration/wick-rule-matrix.test.ts[2m > [22mLONG wick rule deterministic test[2m > [22m8: Wick exactly touches level
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/integration/wick-rule-matrix.test.ts[2m > [22mSHORT wick rule deterministic test[2m > [22m10: Short C1 wick touches next
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/integration/wick-rule-matrix.test.ts[2m > [22mSHORT wick rule deterministic test[2m > [22m11: Short C2 wick touches next
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/integration/wick-rule-matrix.test.ts[2m > [22mSHORT wick rule deterministic test[2m > [22m12: Short C3 wick touches next
+[31m[1mAssertionError[22m: expected 'ACCEPTED' to be 'REJECTED' // Object.is equality[39m
+
+Expected: [32m"[7mREJEC[27mTED"[39m
+Received: [31m"[7mACCEP[27mTED"[39m
+
+[36m [2m❯[22m backend/tests/integration/wick-rule-matrix.test.ts:[2m84:32[22m[39m
+    [90m 82| [39m      [34mit[39m(matrixCase[33m.[39mid [33m+[39m [32m': '[39m [33m+[39m matrixCase[33m.[39mdescription[33m,[39m () [33m=>[39m {
+    [90m 83| [39m        [35mconst[39m result [33m=[39m [34mrun[39m(side[33m,[39m matrixCase)[33m;[39m
+    [90m 84| [39m        [34mexpect[39m([34mactual[39m(result))[33m.[39m[34mtoBe[39m(matrixCase[33m.[39mexpected)[33m;[39m
+    [90m   | [39m                               [31m^[39m
+    [90m 85| [39m        [35mif[39m (matrixCase[33m.[39mreason) [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m(ma…
+    [90m 86| [39m      })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/integration/wick-rule-matrix.test.ts[2m > [22mLONG wick rule deterministic test[2m > [22m4: C3 closes beyond touched level
+[31m[1mAssertionError[22m: expected 'REJECTED:INSUFFICIENT_BREATHING_ROOM' to be 'ACCEPTED' // Object.is equality[39m
+
+Expected: [32m"ACCEPTED"[39m
+Received: [31m"REJECTED:INSUFFICIENT_BREATHING_ROOM"[39m
+
+[36m [2m❯[22m backend/tests/integration/wick-rule-matrix.test.ts:[2m84:32[22m[39m
+    [90m 82| [39m      [34mit[39m(matrixCase[33m.[39mid [33m+[39m [32m': '[39m [33m+[39m matrixCase[33m.[39mdescription[33m,[39m () [33m=>[39m {
+    [90m 83| [39m        [35mconst[39m result [33m=[39m [34mrun[39m(side[33m,[39m matrixCase)[33m;[39m
+    [90m 84| [39m        [34mexpect[39m([34mactual[39m(result))[33m.[39m[34mtoBe[39m(matrixCase[33m.[39mexpected)[33m;[39m
+    [90m   | [39m                               [31m^[39m
+    [90m 85| [39m        [35mif[39m (matrixCase[33m.[39mreason) [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m(ma…
+    [90m 86| [39m      })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/integration/wick-rule-matrix.test.ts[2m > [22mLONG wick rule deterministic test[2m > [22m7: C3 wick 3rd, close between 2nd/3rd
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/integration/wick-rule-matrix.test.ts[2m > [22mLONG wick rule deterministic test[2m > [22m9: C3 closes exactly at level
+[31m[1mAssertionError[22m: expected 'REJECTED:INSUFFICIENT_BREATHING_ROOM' to be 'REJECTED' // Object.is equality[39m
+
+Expected: [32m"REJECTED"[39m
+Received: [31m"REJECTED[7m:INSUFFICIENT_BREATHING_ROOM[27m"[39m
+
+[36m [2m❯[22m backend/tests/integration/wick-rule-matrix.test.ts:[2m84:32[22m[39m
+    [90m 82| [39m      [34mit[39m(matrixCase[33m.[39mid [33m+[39m [32m': '[39m [33m+[39m matrixCase[33m.[39mdescription[33m,[39m () [33m=>[39m {
+    [90m 83| [39m        [35mconst[39m result [33m=[39m [34mrun[39m(side[33m,[39m matrixCase)[33m;[39m
+    [90m 84| [39m        [34mexpect[39m([34mactual[39m(result))[33m.[39m[34mtoBe[39m(matrixCase[33m.[39mexpected)[33m;[39m
+    [90m   | [39m                               [31m^[39m
+    [90m 85| [39m        [35mif[39m (matrixCase[33m.[39mreason) [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m(ma…
+    [90m 86| [39m      })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-003: rejects long Candle 3 color
+[31m[1mAssertionError[22m: expected 'CANDLE_2_COLOR_INVALID' to be 'CANDLE_3_COLOR_INVALID' // Object.is equality[39m
+
+Expected: [32m"CANDLE_[7m3[27m_COLOR_INVALID"[39m
+Received: [31m"CANDLE_[7m2[27m_COLOR_INVALID"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m116:37[22m[39m
+    [90m114| [39m    ]))[33m;[39m
+    [90m115| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m116| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'CANDLE_3_COLOR_INVALID'[39m)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m117| [39m  })[33m;[39m
+    [90m118| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-004: accepts valid long with all green candles
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m125:29[22m[39m
+    [90m123| [39m      [34mcandle[39m([34m3[39m[33m,[39m [34m5010[39m[33m,[39m [34m5015[39m)  [90m// C3: green[39m
+    [90m124| [39m    ]))[33m;[39m
+    [90m125| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m126| [39m    [34mexpect[39m(result[33m.[39mside)[33m.[39m[34mtoBe[39m([32m'LONG'[39m)[33m;[39m
+    [90m127| [39m    [34mexpect[39m(result[33m.[39mentryPrice)[33m.[39m[34mtoBe[39m([34m5015[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-005: rejects long break - C3 did not close beyond level
+[31m[1mAssertionError[22m: expected 'CANDLE_2_COLOR_INVALID' to be 'CANDLE_3_DID_NOT_BREAK_LEVEL' // Object.is equality[39m
+
+Expected: [32m"CANDLE_[7m3_DID_NOT_BREAK_LEVEL[27m"[39m
+Received: [31m"CANDLE_[7m2_COLOR_INVALID[27m"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m137:37[22m[39m
+    [90m135| [39m    ]))[33m;[39m
+    [90m136| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m137| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'CANDLE_3_DID_NOT_BREAK_LEVEL[39m…
+    [90m   | [39m                                    [31m^[39m
+    [90m138| [39m  })[33m;[39m
+    [90m139| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-007: rejects long EMA alignment invalid
+[31m[1mAssertionError[22m: expected 'CANDLE_2_COLOR_INVALID' to be 'EMA_ALIGNMENT_INVALID' // Object.is equality[39m
+
+Expected: [32m"[7mEMA_ALIGNMENT[27m_INVALID"[39m
+Received: [31m"[7mCANDLE_2_COLOR[27m_INVALID"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m147:37[22m[39m
+    [90m145| [39m    ][33m,[39m [34m99[39m[33m,[39m [34m101[39m))[33m;[39m [90m// EMA9 < EMA21[39m
+    [90m146| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m147| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'EMA_ALIGNMENT_INVALID'[39m)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m148| [39m  })[33m;[39m
+    [90m149| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m14 passed[39m[22m[90m (16)[39m
+[2m      Tests [22m [1m[31m14 failed[39m[22m[2m | [22m[1m[32m99 passed[39m[22m[90m (113)[39m
+[2m   Start at [22m 22:15:50
+[2m   Duration [22m 6.29s[2m (transform 1.14s, setup 0ms, collect 2.64s, tests 1.71s, environment 8ms, prepare 4.58s)[22m
+

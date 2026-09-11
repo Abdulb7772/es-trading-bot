@@ -1,0 +1,133 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Users/abdul/Desktop/es-trading-bot[39m
+
+ [31m❯[39m backend/tests/qa/deterministic-qa-suite.test.ts [2m([22m[2m15 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[90m 219[2mms[22m[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-001: valid long - C1 green, C2 green, C3 green, C3 closes beyond level[90m 7[2mms[22m[31m[39m
+[31m     → expected false to be true // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-005: C2 red invalid color (3-bar requires green C2)[90m 2[2mms[22m[31m[39m
+[31m     → expected true to be false // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-006: C3 closes beyond resistance[90m 2[2mms[22m[31m[39m
+[31m     → expected false to be true // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-007: C3 fails to close beyond resistance[90m 7[2mms[22m[31m[39m
+[31m     → expected 'CANDLE_2_COLOR_INVALID' to be 'CANDLE_3_DID_NOT_BREAK_LEVEL' // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-008: EMA9 > EMA21 aligns for long[90m 1[2mms[22m[31m[39m
+[31m     → expected false to be true // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-009: EMA9 < EMA21 rejects long[90m 2[2mms[22m[31m[39m
+[31m     → expected 'CANDLE_2_COLOR_INVALID' to be 'EMA_ALIGNMENT_INVALID' // Object.is equality[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 6 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-001: valid long - C1 green, C2 green, C3 green, C3 closes beyond level
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m95:29[22m[39m
+    [90m 93| [39m      [34mcandle[39m([34m3[39m[33m,[39m [34m5010[39m[33m,[39m [34m5030[39m)  [90m// C3: green, closes beyond resistance[39m
+    [90m 94| [39m    ]))[33m;[39m
+    [90m 95| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m 96| [39m    [34mexpect[39m(result[33m.[39mside)[33m.[39m[34mtoBe[39m([32m'LONG'[39m)[33m;[39m
+    [90m 97| [39m    [34mexpect[39m(result[33m.[39mentryPrice)[33m.[39m[34mtoBe[39m([34m5030[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-005: C2 red invalid color (3-bar requires green C2)
+[31m[1mAssertionError[22m: expected true to be false // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m136:29[22m[39m
+    [90m134| [39m      [34mcandle[39m([34m3[39m[33m,[39m [34m5010[39m[33m,[39m [34m5015[39m)  [90m// C3: green[39m
+    [90m135| [39m    ]))[33m;[39m
+    [90m136| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m137| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'CANDLE_2_COLOR_INVALID'[39m)[33m;[39m
+    [90m138| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-006: C3 closes beyond resistance
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m146:29[22m[39m
+    [90m144| [39m      [34mcandle[39m([34m3[39m[33m,[39m [34m5010[39m[33m,[39m [34m5030[39m)  [90m// C3: closes beyond resistance 5030[39m
+    [90m145| [39m    ]))[33m;[39m
+    [90m146| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m147| [39m    [34mexpect[39m(result[33m.[39mbrokenLevel[33m?.[39mprice)[33m.[39m[34mtoBe[39m([34m5000[39m)[33m;[39m
+    [90m148| [39m    [34mexpect[39m(result[33m.[39mnextRelevantLevel[33m?.[39mprice)[33m.[39m[34mtoBe[39m([34m5030[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-007: C3 fails to close beyond resistance
+[31m[1mAssertionError[22m: expected 'CANDLE_2_COLOR_INVALID' to be 'CANDLE_3_DID_NOT_BREAK_LEVEL' // Object.is equality[39m
+
+Expected: [32m"CANDLE_[7m3_DID_NOT_BREAK_LEVEL[27m"[39m
+Received: [31m"CANDLE_[7m2_COLOR_INVALID[27m"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m158:37[22m[39m
+    [90m156| [39m    ]))[33m;[39m
+    [90m157| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m158| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'CANDLE_3_DID_NOT_BREAK_LEVEL[39m…
+    [90m   | [39m                                    [31m^[39m
+    [90m159| [39m  })[33m;[39m
+    [90m160| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-008: EMA9 > EMA21 aligns for long
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m167:29[22m[39m
+    [90m165| [39m      [34mcandle[39m([34m3[39m[33m,[39m [34m5010[39m[33m,[39m [34m5020[39m)
+    [90m166| [39m    ][33m,[39m [34m101[39m[33m,[39m [34m100[39m))[33m;[39m [90m// EMA9 > EMA21[39m
+    [90m167| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m168| [39m  })[33m;[39m
+    [90m169| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-009: EMA9 < EMA21 rejects long
+[31m[1mAssertionError[22m: expected 'CANDLE_2_COLOR_INVALID' to be 'EMA_ALIGNMENT_INVALID' // Object.is equality[39m
+
+Expected: [32m"[7mEMA_ALIGNMENT[27m_INVALID"[39m
+Received: [31m"[7mCANDLE_2_COLOR[27m_INVALID"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m177:37[22m[39m
+    [90m175| [39m    ][33m,[39m [34m99[39m[33m,[39m [34m101[39m))[33m;[39m [90m// EMA9 < EMA21[39m
+    [90m176| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m177| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'EMA_ALIGNMENT_INVALID'[39m)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m178| [39m  })[33m;[39m
+    [90m179| [39m})
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[90m (15)[39m
+[2m   Start at [22m 22:10:08
+[2m   Duration [22m 3.64s[2m (transform 219ms, setup 0ms, collect 551ms, tests 219ms, environment 1ms, prepare 1.93s)[22m
+

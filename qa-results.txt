@@ -1,0 +1,205 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Users/abdul/Desktop/es-trading-bot[39m
+
+ [31m❯[39m backend/tests/qa/deterministic-qa-suite.test.ts [2m([22m[2m18 tests[22m[2m | [22m[31m10 failed[39m[2m)[22m[90m 145[2mms[22m[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-001: valid long setup with Candle 1 at support, Candle 3 closes beyond resistance[90m 6[2mms[22m[31m[39m
+[31m     → expected false to be true // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-002: Candle 1 open below support rejected[90m 6[2mms[22m[31m[39m
+[31m     → expected 'MALFORMED_LEVELS' to be 'CANDLE_1_LOCATION_INVALID' // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-003: Candle 1 above support (no level interaction)[90m 4[2mms[22m[31m[39m
+[31m     → expected 'MALFORMED_LEVELS' to be 'NO_RELEVANT_SUPPORT_RESISTANCE_LEVEL' // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-005: Candle 1 red[90m 1[2mms[22m[31m[39m
+[31m     → expected 'MALFORMED_LEVELS' to be 'CANDLE_1_COLOR_INVALID' // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-006: Candle 2 red[90m 1[2mms[22m[31m[39m
+[31m     → expected 'MALFORMED_LEVELS' to be 'CANDLE_2_COLOR_INVALID' // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-007: Candle 2 green[90m 2[2mms[22m[31m[39m
+[31m     → expected false to be true // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-009: Candle 3 green[90m 1[2mms[22m[31m[39m
+[31m     → expected false to be true // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-010: Candle 3 red[90m 1[2mms[22m[31m[39m
+[31m     → expected 'MALFORMED_LEVELS' to be 'CANDLE_3_COLOR_INVALID' // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-011: Candle 3 closes beyond resistance[90m 1[2mms[22m[31m[39m
+[31m     → expected false to be true // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-012: Candle 3 fails to close beyond resistance[90m 1[2mms[22m[31m[39m
+[31m     → expected 'MALFORMED_LEVELS' to be 'CANDLE_3_DID_NOT_BREAK_LEVEL' // Object.is equality[39m
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 10 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-001: valid long setup with Candle 1 at support, Candle 3 closes beyond resistance
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m91:29[22m[39m
+    [90m 89| [39m      [34mcandle[39m([34m3[39m[33m,[39m [34m5025[39m[33m,[39m [34m5035[39m)  [90m// C3: closes beyond resistance at 5030[39m
+    [90m 90| [39m    ]))[33m;[39m
+    [90m 91| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m 92| [39m    [34mexpect[39m(result[33m.[39mside)[33m.[39m[34mtoBe[39m([32m'LONG'[39m)[33m;[39m
+    [90m 93| [39m    [34mexpect[39m(result[33m.[39mentryPrice)[33m.[39m[34mtoBe[39m([34m5035[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-002: Candle 1 open below support rejected
+[31m[1mAssertionError[22m: expected 'MALFORMED_LEVELS' to be 'CANDLE_1_LOCATION_INVALID' // Object.is equality[39m
+
+Expected: [32m"CANDLE_1_LOCATION_INVALID"[39m
+Received: [31m"MALFORMED_LEVELS"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m105:37[22m[39m
+    [90m103| [39m    ]))[33m;[39m
+    [90m104| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m105| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'CANDLE_1_LOCATION_INVALID'[39m)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m106| [39m  })[33m;[39m
+    [90m107| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-003: Candle 1 above support (no level interaction)
+[31m[1mAssertionError[22m: expected 'MALFORMED_LEVELS' to be 'NO_RELEVANT_SUPPORT_RESISTANCE_LEVEL' // Object.is equality[39m
+
+Expected: [32m"[7mNO_RELEVANT_SUPPORT_RESISTANCE[27m_LEVEL"[39m
+Received: [31m"[7mMALFORMED[27m_LEVEL[7mS[27m"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m115:37[22m[39m
+    [90m113| [39m    ]))[33m;[39m
+    [90m114| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m115| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'NO_RELEVANT_SUPPORT_RESISTAN[39m…
+    [90m   | [39m                                    [31m^[39m
+    [90m116| [39m  })[33m;[39m
+    [90m117| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-005: Candle 1 red
+[31m[1mAssertionError[22m: expected 'MALFORMED_LEVELS' to be 'CANDLE_1_COLOR_INVALID' // Object.is equality[39m
+
+Expected: [32m"CANDLE_1_COLOR_INVALID"[39m
+Received: [31m"MALFORMED_LEVELS"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m136:37[22m[39m
+    [90m134| [39m    [90m// C1 red should be invalid for long strategy[39m
+    [90m135| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m136| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'CANDLE_1_COLOR_INVALID'[39m)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m137| [39m  })[33m;[39m
+    [90m138| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-006: Candle 2 red
+[31m[1mAssertionError[22m: expected 'MALFORMED_LEVELS' to be 'CANDLE_2_COLOR_INVALID' // Object.is equality[39m
+
+Expected: [32m"CANDLE_2_COLOR_INVALID"[39m
+Received: [31m"MALFORMED_LEVELS"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m147:37[22m[39m
+    [90m145| [39m    [90m// C2 red invalid for long (must be green in 3-bar strategy)[39m
+    [90m146| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m147| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'CANDLE_2_COLOR_INVALID'[39m)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m148| [39m  })[33m;[39m
+    [90m149| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-007: Candle 2 green
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m157:29[22m[39m
+    [90m155| [39m    ]))[33m;[39m
+    [90m156| [39m    [90m// C2 green is valid for long continuation[39m
+    [90m157| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m158| [39m  })[33m;[39m
+    [90m159| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-009: Candle 3 green
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m176:29[22m[39m
+    [90m174| [39m      [34mcandle[39m([34m3[39m[33m,[39m [34m5010[39m[33m,[39m [34m5015[39m)  [90m// C3: green, closes beyond level[39m
+    [90m175| [39m    ]))[33m;[39m
+    [90m176| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m177| [39m  })[33m;[39m
+    [90m178| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-010: Candle 3 red
+[31m[1mAssertionError[22m: expected 'MALFORMED_LEVELS' to be 'CANDLE_3_COLOR_INVALID' // Object.is equality[39m
+
+Expected: [32m"CANDLE_3_COLOR_INVALID"[39m
+Received: [31m"MALFORMED_LEVELS"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m187:37[22m[39m
+    [90m185| [39m    [90m// C3 red invalid for long[39m
+    [90m186| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m187| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'CANDLE_3_COLOR_INVALID'[39m)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m188| [39m  })[33m;[39m
+    [90m189| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-011: Candle 3 closes beyond resistance
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m196:29[22m[39m
+    [90m194| [39m      [34mcandle[39m([34m3[39m[33m,[39m [34m5010[39m[33m,[39m [34m5035[39m)  [90m// C3: closes beyond resistance at 5030[39m
+    [90m195| [39m    ]))[33m;[39m
+    [90m196| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m197| [39m    [34mexpect[39m(result[33m.[39mbrokenLevel[33m?.[39mprice)[33m.[39m[34mtoBe[39m([34m5000[39m)[33m;[39m [90m// support broken[39m
+    [90m198| [39m    [34mexpect[39m(result[33m.[39mnextRelevantLevel[33m?.[39mprice)[33m.[39m[34mtoBe[39m([34m5030[39m)[33m;[39m [90m// next level[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-012: Candle 3 fails to close beyond resistance
+[31m[1mAssertionError[22m: expected 'MALFORMED_LEVELS' to be 'CANDLE_3_DID_NOT_BREAK_LEVEL' // Object.is equality[39m
+
+Expected: [32m"[7mCANDLE_3_DID_NOT_BREAK[27m_LEVEL"[39m
+Received: [31m"[7mMALFORMED[27m_LEVEL[7mS[27m"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m208:37[22m[39m
+    [90m206| [39m    ]))[33m;[39m
+    [90m207| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m208| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'CANDLE_3_DID_NOT_BREAK_LEVEL[39m…
+    [90m   | [39m                                    [31m^[39m
+    [90m209| [39m  })[33m;[39m
+    [90m210| [39m})
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m10 failed[39m[22m[2m | [22m[1m[32m8 passed[39m[22m[90m (18)[39m
+[2m   Start at [22m 21:40:14
+[2m   Duration [22m 1.25s[2m (transform 307ms, setup 0ms, collect 366ms, tests 145ms, environment 0ms, prepare 234ms)[22m
+

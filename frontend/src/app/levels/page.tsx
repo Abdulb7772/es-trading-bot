@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { type LevelImportPreview, type ParsedLevelRow, type UserLevel } from '../../domain/levels';
-import { getLevels, updateLevels } from '../../domain/api-client';
+import { getLevels, importLevels } from '../../domain/api-client';
 import { levelsToText, parseJsonLevels, parseLevelText } from '../../domain/level-import';
 import { Nav } from '../../components/Nav';
 
@@ -82,7 +82,7 @@ export default function LevelsPage() {
 
   async function confirmSave() {
     try {
-      const saved = await updateLevels(sortedLevels.map((level) => level.price));
+      const saved = await importLevels(levelsToText(sortedLevels), 'text');
       const nextLevels = saved.levels.map((level) => ({ id: level.id, price: level.price }));
       setActiveLevels(nextLevels);
       setDraftLevels(nextLevels);

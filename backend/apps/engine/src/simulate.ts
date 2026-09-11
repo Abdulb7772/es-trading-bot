@@ -7,7 +7,7 @@ async function main(): Promise<void> {
     ...result.diagnostics,
     lockedOut: result.lockedOut,
     trades: result.trades,
-    rejectedReasons: result.rejectedSetups.map(({ evaluation }) => evaluation.reasons.map(({ code }) => code))
+    rejectedReasons: result.rejectedSetups.map(({ evaluation }) => evaluation.reasons.map(({ code, description, details }) => ({ code, description, details })))
   }, null, 2));
 }
 

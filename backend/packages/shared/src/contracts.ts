@@ -10,7 +10,7 @@ const levelsConfigSchema = z.object({
 });
 const strategyConfigContractShape = z.object({
   symbol: z.literal('/ES'),
-  timeframe: z.string().regex(/^\d+(s|m|h|d)$/),
+  timeframe: z.literal('15m'),
   emaFastPeriod: z.number().int().positive(),
   emaSlowPeriod: z.number().int().positive(),
   stopPoints: finiteNumber.positive(),
@@ -81,7 +81,10 @@ export const tradingDayStateSchema = z.object({
   tradingDay: z.string().min(1),
   hasLosingTrade: z.boolean(),
   canOpenNewTrade: z.boolean(),
-  dailyLossLocked: z.boolean()
+  dailyLossLocked: z.boolean(),
+  realizedPnl: finiteNumber,
+  lockReason: z.string().nullable(),
+  lockTriggeredAt: timestamp.nullable()
 });
 export type TradingDayState = z.infer<typeof tradingDayStateSchema>;
 

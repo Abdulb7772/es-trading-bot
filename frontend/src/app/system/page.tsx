@@ -54,6 +54,13 @@ export default function SystemPage() {
                   <StatusRow label="API credential" value={snapshot.apiCredentialConfigured ? 'Configured' : 'Not configured'} tone={snapshot.apiCredentialConfigured ? 'green' : 'muted'} />
                   <p className="safety-note">Credential values and tokens are intentionally never displayed in this dashboard.</p>
                 </Panel>
+                <Panel title="Daily-loss protection" caption="Bot-level first-loss lock">
+                  <StatusRow label="Trading day" value={snapshot.dailyRisk.tradingDay} tone="muted" />
+                  <StatusRow label="Lock status" value={snapshot.dailyRisk.dailyLossLocked ? 'LOCKED' : 'UNLOCKED'} tone={snapshot.dailyRisk.dailyLossLocked ? 'orange' : 'green'} />
+                  <div className="system-row"><span>Lock reason</span><strong>{snapshot.dailyRisk.lockReason ?? 'None'}</strong></div>
+                  <div className="system-row"><span>Lock triggered</span><strong className="mono">{snapshot.dailyRisk.lockTriggeredAt ?? 'Not triggered'}</strong></div>
+                  <div className="system-row"><span>Realized P&amp;L</span><strong className="mono">${snapshot.dailyRisk.realizedPnl.toFixed(2)}</strong></div>
+                </Panel>
                 <Panel title="Recovery" caption="Reconciliation and disconnect history">
                   <div className="system-row"><span>Last reconciliation</span><strong className="mono">{snapshot.lastReconciliation}</strong></div>
                   <StatusRow label="Current recovery state" value={snapshot.recoveryState} />

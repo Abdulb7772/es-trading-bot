@@ -14,6 +14,8 @@ export interface DailyRiskState {
   readonly tradingDay: string;
   readonly losingTradeRecorded: boolean;
   readonly realizedPnl: number;
+  readonly lockReason: string | null;
+  readonly lockTriggeredAt: string | null;
 }
 
 export interface RiskStateStore {
@@ -58,10 +60,18 @@ export interface TradingEligibility {
   readonly tradingWindowOpen: boolean;
   readonly dailyLossLocked: boolean;
   readonly canOpenNewTrade: boolean;
+  readonly realizedPnl: number;
+  readonly lockReason: string | null;
+  readonly lockTriggeredAt: string | null;
 }
 
 export interface RealizedTrade {
   readonly result: Extract<TradeResult, 'WIN' | 'LOSS' | 'BREAKEVEN'>;
+  readonly pnl: number;
+  readonly timestamp: Date;
+}
+
+export interface HistoricalTradeRecord {
   readonly pnl: number;
   readonly timestamp: Date;
 }
@@ -88,7 +98,12 @@ export class TradingRiskState {
     this.timeZone = options.timeZone ?? 'America/New_York';
     this.cutoffHour = options.cutoffHour ?? 16;
     this.cutoffMinute = options.cutoffMinute ?? 0;
-    this.state = this.stateStore.load();
+    const loaded = this.stateStore.load();
+    this.state = loaded ? {
+      ...loaded,
+      lockReason: loaded.lockReason ?? (loaded.losingTradeRecorded ? 'First losing trade of the trading day.' : null),
+      lockTriggeredAt: loaded.lockTriggeredAt ?? null
+    } : null;
   }
 
   eligibility(timestamp: Date): TradingEligibility {
@@ -96,21 +111,43 @@ export class TradingRiskState {
     this.ensureTradingDay(tradingDay);
     const dailyLossLocked = this.state?.losingTradeRecorded ?? false;
     const tradingWindowOpen = this.isBeforeCutoff(timestamp);
-    return { tradingDay, tradingWindowOpen, dailyLossLocked, canOpenNewTrade: tradingWindowOpen && !dailyLossLocked };
+    return {
+      tradingDay,
+      tradingWindowOpen,
+      dailyLossLocked,
+      canOpenNewTrade: tradingWindowOpen && !dailyLossLocked,
+      realizedPnl: this.state?.realizedPnl ?? 0,
+      lockReason: this.state?.lockReason ?? null,
+      lockTriggeredAt: this.state?.lockTriggeredAt ?? null
+    };
   }
 
   recordRealizedTrade(trade: RealizedTrade): DailyRiskState {
     const tradingDay = this.currentTradingDay(trade.timestamp);
     this.ensureTradingDay(tradingDay);
-    const current = this.state ?? { tradingDay, losingTradeRecorded: false, realizedPnl: 0 };
+    const current = this.state ?? { tradingDay, losingTradeRecorded: false, realizedPnl: 0, lockReason: null, lockTriggeredAt: null };
+    const firstLoss = !current.losingTradeRecorded && trade.result === 'LOSS';
     const next: DailyRiskState = {
       tradingDay,
       losingTradeRecorded: current.losingTradeRecorded || trade.result === 'LOSS',
-      realizedPnl: current.realizedPnl + trade.pnl
+      realizedPnl: current.realizedPnl + trade.pnl,
+      lockReason: firstLoss ? 'First losing trade of the trading day.' : current.lockReason,
+      lockTriggeredAt: firstLoss ? trade.timestamp.toISOString() : current.lockTriggeredAt
     };
     this.state = next;
     this.stateStore.save(next);
     return { ...next };
+  }
+
+  restoreFromTrades(trades: readonly HistoricalTradeRecord[]): DailyRiskState | null {
+    for (const trade of [...trades].sort((left, right) => left.timestamp.getTime() - right.timestamp.getTime())) {
+      this.recordRealizedTrade({
+        pnl: trade.pnl,
+        timestamp: trade.timestamp,
+        result: trade.pnl < 0 ? 'LOSS' : trade.pnl > 0 ? 'WIN' : 'BREAKEVEN'
+      });
+    }
+    return this.snapshot();
   }
 
   snapshot(): DailyRiskState | null {
@@ -123,7 +160,7 @@ export class TradingRiskState {
 
   private ensureTradingDay(tradingDay: string): void {
     if (this.state?.tradingDay === tradingDay) return;
-    this.state = { tradingDay, losingTradeRecorded: false, realizedPnl: 0 };
+    this.state = { tradingDay, losingTradeRecorded: false, realizedPnl: 0, lockReason: null, lockTriggeredAt: null };
     this.stateStore.save(this.state);
   }
 

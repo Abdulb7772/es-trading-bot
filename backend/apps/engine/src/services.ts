@@ -1,4 +1,4 @@
-import { normalizeLevels } from '@es-trading/levels';
+import { normalizeLevels, parseLevelsFromCsv, parseLevelsFromText, validateLevelCount } from '@es-trading/levels';
 import { MongoDatabase, type DatabaseCollections } from '@es-trading/database';
 import { simulationFixture } from '@es-trading/simulation/fixture';
 import { runSimulation } from '@es-trading/simulation';
@@ -23,6 +23,7 @@ import {
 } from '@es-trading/shared';
 import type { StrategyEvaluation, Trade } from '@es-trading/shared';
 import { z } from 'zod';
+import type { TradingRiskState } from '@es-trading/risk';
 
 const healthSchema = z.object({ status: z.literal('ok'), service: z.string(), time: z.string() });
 const fixtureSchema = z.object({ id: z.string(), name: z.string(), description: z.string() });
@@ -37,6 +38,7 @@ export interface BackendApplicationServices {
   updateConfig(input: unknown): StrategyConfig;
   getLevels(): LevelSet;
   updateLevels(input: unknown): LevelSet;
+  updateLevelsText(input: unknown): LevelSet;
   validateLevels(input: unknown): { valid: boolean; levels: number[]; error?: string };
   getEvaluations(): readonly StrategyEvaluation[];
   getEvaluation(id: string): StrategyEvaluation | undefined;
@@ -53,8 +55,7 @@ const defaultConfig = strategyConfigSchema.parse({
 });
 
 const defaultLevels = levelSetSchema.parse({
-  id: 'local-levels', name: 'Local levels', updatedAt: new Date().toISOString(),
-  levels: [5000, 5010, 5020, 5030].map((price, index) => ({ id: `level-${index + 1}`, price, label: `L${index + 1}`, kind: index === 0 ? 'support' : 'resistance', distance: '0.00 pts' }))
+  id: 'manual-es-levels', name: 'Manual ES levels', updatedAt: new Date().toISOString(), levels: []
 });
 
 const emptyEvaluation = (id: string): StrategyEvaluation => ({
@@ -74,12 +75,14 @@ const emptyEvaluation = (id: string): StrategyEvaluation => ({
 export interface ApplicationServiceOptions {
   readonly initialData?: Partial<DatabaseCollections>;
   readonly database?: MongoDatabase;
+  readonly riskState?: TradingRiskState;
 }
 
-export async function createPersistentBackendApplicationServices(database: MongoDatabase): Promise<BackendApplicationServices> {
+export async function createPersistentBackendApplicationServices(database: MongoDatabase, options: Pick<ApplicationServiceOptions, 'riskState'> = {}): Promise<BackendApplicationServices> {
   await database.connect();
   const data = await database.load();
-  return createBackendApplicationServices({ initialData: data, database });
+  options.riskState?.restoreFromTrades(data.trades.filter((trade) => trade.status === 'closed' && trade.exit !== undefined).map((trade) => ({ pnl: trade.pnl, timestamp: new Date(trade.time) })));
+  return createBackendApplicationServices({ initialData: data, database, ...options });
 }
 
 export function createBackendApplicationServices(options: ApplicationServiceOptions = {}): BackendApplicationServices {
@@ -89,6 +92,14 @@ export function createBackendApplicationServices(options: ApplicationServiceOpti
   const trades: Trade[] = [...(options.initialData?.trades ?? [])];
   const logs: LogEntry[] = [...(options.initialData?.logs ?? [])];
 
+  const replaceLevels = (values: readonly unknown[]): LevelSet => {
+    const normalized = normalizeLevels(values);
+    validateLevelCount(normalized);
+    levels = levelSetSchema.parse({ ...levels, levels: normalized.map((price, index) => ({ id: `level-${index + 1}`, price })), updatedAt: new Date().toISOString() });
+    if (options.database) void options.database.saveLevels(levels);
+    return levels;
+  };
+
   return {
     getHealth: () => healthSchema.parse({ status: 'ok', service: 'engine', time: new Date().toISOString() }),
     getStatus: () => systemStatusSchema.parse({ engine: 'operational', tradingEnabled: false, dailyLossLocked: false, dailyLossUsed: 0, dailyLossLimit: 1000, lastHeartbeat: new Date().toISOString() }),
@@ -96,13 +107,28 @@ export function createBackendApplicationServices(options: ApplicationServiceOpti
     getConfig: () => strategyConfigContractSchema.parse(config),
     updateConfig: (input) => { config = strategyConfigSchema.parse(input); if (options.database) void options.database.saveConfig(config); return strategyConfigContractSchema.parse(config); },
     getLevels: () => levelSetSchema.parse(levels),
-    updateLevels: (input) => { const parsed = levelsRequestSchema.parse(input); const normalized = normalizeLevels(parsed.levels); levels = levelSetSchema.parse({ ...levels, levels: normalized.map((price, index) => ({ id: `level-${index + 1}`, price })), updatedAt: new Date().toISOString() }); if (options.database) void options.database.saveLevels(levels); return levels; },
+    updateLevels: (input) => replaceLevels(levelsRequestSchema.parse(input).levels),
+    updateLevelsText: (input) => {
+      const parsed = z.object({ text: z.string().min(1), format: z.enum(['text', 'csv']).default('text') }).parse(input);
+      return replaceLevels(parsed.format === 'csv' ? parseLevelsFromCsv(parsed.text) : parseLevelsFromText(parsed.text));
+    },
     validateLevels: (input) => { try { const parsed = levelsRequestSchema.parse(input); return { valid: true, levels: [...normalizeLevels(parsed.levels)] }; } catch (error) { return { valid: false, levels: [], error: error instanceof Error ? error.message : 'Invalid levels.' }; } },
     getEvaluations: () => evaluations.map((evaluation) => strategyEvaluationSchema.parse(evaluation)),
     getEvaluation: (id) => evaluations.find((evaluation) => evaluation.id === id),
     getTrades: () => [...trades],
     getTrade: (id) => trades.find((trade) => trade.id === id),
-    getDailyState: () => tradingDayStateSchema.parse({ tradingDay: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date()), hasLosingTrade: false, canOpenNewTrade: true, dailyLossLocked: false }),
+    getDailyState: () => {
+      const eligibility = options.riskState?.eligibility(new Date());
+      return tradingDayStateSchema.parse({
+        tradingDay: eligibility?.tradingDay ?? new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date()),
+        hasLosingTrade: eligibility?.dailyLossLocked ?? false,
+        canOpenNewTrade: eligibility?.canOpenNewTrade ?? true,
+        dailyLossLocked: eligibility?.dailyLossLocked ?? false,
+        realizedPnl: eligibility?.realizedPnl ?? 0,
+        lockReason: eligibility?.lockReason ?? null,
+        lockTriggeredAt: eligibility?.lockTriggeredAt ?? null
+      });
+    },
     getLogs: () => logs.map((log) => logEntrySchema.parse(log)),
     getSimulationFixtures: () => [fixtureSchema.parse({ id: 'local-fixture', name: 'Local replay', description: 'Built-in deterministic /ES replay fixture.' })],
     runSimulation: async (input) => {

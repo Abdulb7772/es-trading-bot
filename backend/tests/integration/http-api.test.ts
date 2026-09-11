@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { Server } from 'node:http';
 import { createApiServer, listenApiServer } from '../../apps/engine/src/http';
 
@@ -32,7 +34,7 @@ describe('local backend HTTP API', () => {
     expect(status).toMatchObject({ status: 200, body: { engine: 'operational' } });
     expect(market).toMatchObject({ status: 200, body: { symbol: '/ES' } });
     expect(config).toMatchObject({ status: 200, body: { symbol: '/ES' } });
-    expect(levels).toMatchObject({ status: 200, body: { id: 'local-levels' } });
+    expect(levels).toMatchObject({ status: 200, body: { id: 'manual-es-levels', levels: [] } });
     expect(daily.status).toBe(200);
     expect(logs).toMatchObject({ status: 200, body: [] });
   });
@@ -40,14 +42,18 @@ describe('local backend HTTP API', () => {
   it('validates and updates config and levels through application services', async () => {
     server = await listenApiServer(createApiServer(), 0);
     const invalidConfig = await request('/api/config', { method: 'PUT', body: JSON.stringify({ symbol: '/NQ' }) });
-    const validConfig = await request('/api/config', { method: 'PUT', body: JSON.stringify({ symbol: '/ES', timeframe: '5m', tradingTimezone: 'America/New_York', noNewTradesAtOrAfter: '16:00', levels: { source: 'manual_input' } }) });
+    const validConfig = await request('/api/config', { method: 'PUT', body: JSON.stringify({ symbol: '/ES', timeframe: '15m', tradingTimezone: 'America/New_York', noNewTradesAtOrAfter: '16:00', levels: { source: 'manual_input' } }) });
     const validation = await request('/api/levels/validate', { method: 'POST', body: JSON.stringify({ levels: [5000, 5000, 5000.25] }) });
-    const updatedLevels = await request('/api/levels', { method: 'PUT', body: JSON.stringify({ levels: [5000, 5010] }) });
+    const updatedLevels = await request('/api/levels', { method: 'PUT', body: JSON.stringify({ levels: Array.from({ length: 80 }, (_, index) => 5000 + index * 0.25) }) });
+    const importedLevels = await request('/api/levels/import', { method: 'POST', body: JSON.stringify({ text: readFileSync(resolve(process.cwd(), 'backend/tests/fixtures/es-levels-90.txt'), 'utf8') }) });
 
     expect(invalidConfig.status).toBe(400);
-    expect(validConfig).toMatchObject({ status: 200, body: { timeframe: '5m' } });
+    expect(validConfig).toMatchObject({ status: 200, body: { timeframe: '15m' } });
     expect(validation).toMatchObject({ status: 200, body: { valid: true, levels: [5000, 5000.25] } });
-    expect(updatedLevels).toMatchObject({ status: 200, body: { levels: [{ price: 5000 }, { price: 5010 }] } });
+    expect(updatedLevels.status).toBe(200);
+    expect(importedLevels.status).toBe(200);
+    const importedBody = importedLevels.body as { levels: Array<{ price: number }> };
+    expect(importedBody.levels.map((level) => level.price)).toEqual(expect.arrayContaining([6387.25, 7838.5]));
   });
 
   it('serves collection/detail routes and simulator routes with validation', async () => {

@@ -5,6 +5,7 @@ import {
   simulationResultSchema,
   strategyEvaluationSchema,
   strategyConfigContractSchema,
+  tradingDayStateSchema,
   systemStatusSchema,
   type CurrentMarket,
   type LevelSet,
@@ -64,10 +65,12 @@ export async function getConfig(): Promise<StrategyConfig> { return request('/ap
 export async function updateConfig(config: StrategyConfig): Promise<StrategyConfig> { return request('/api/config', strategyConfigContractSchema, { method: 'PUT', body: JSON.stringify(config) }); }
 export async function getLevels(): Promise<LevelSet> { return request('/api/levels', levelSetSchema); }
 export async function updateLevels(levels: number[]): Promise<LevelSet> { return request('/api/levels', levelSetSchema, { method: 'PUT', body: JSON.stringify({ levels }) }); }
+export async function importLevels(text: string, format: 'text' | 'csv' = 'text'): Promise<LevelSet> { return request('/api/levels/import', levelSetSchema, { method: 'POST', body: JSON.stringify({ text, format }) }); }
 export async function validateLevels(levels: number[]): Promise<{ valid: boolean; levels: number[]; error?: string }> { return request('/api/levels/validate', z.object({ valid: z.boolean(), levels: z.array(z.number()), error: z.string().optional() }), { method: 'POST', body: JSON.stringify({ levels }) }); }
 export async function getEvaluations(): Promise<z.infer<typeof strategyEvaluationSchema>[]> { return request('/api/evaluations', z.array(strategyEvaluationSchema)); }
 export async function getTrades(): Promise<Trade[]> { return request('/api/trades', z.array(tradeSchema)); }
 export async function getLogs(): Promise<LogEntry[]> { return request('/api/logs', z.array(logEntrySchema)); }
+export async function getDailyState(): Promise<z.infer<typeof tradingDayStateSchema>> { return request('/api/daily-state', tradingDayStateSchema); }
 export async function getFixtures(): Promise<SimulationFixture[]> { return request('/api/simulator/fixtures', z.array(fixtureSchema)); }
 export async function runSimulation(input: SimulationRequest): Promise<SimulationResult> { return request('/api/simulator/run', simulationResultSchema, { method: 'POST', body: JSON.stringify(input) }); }
 

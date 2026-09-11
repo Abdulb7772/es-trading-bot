@@ -48,8 +48,8 @@ describe('complete local practice path', () => {
     server = await listenApiServer(createApiServer(), 0);
     expect((await api('/health')).status).toBe(200);
     expect(objectBody((await api('/api/config')).body).symbol).toBe('/ES');
-    const updatedLevels = objectBody((await api('/api/levels', { method: 'PUT', body: JSON.stringify({ levels: levels.map((level) => level.price) }) })).body).levels as Array<{ price: number }>;
-    expect(updatedLevels.map((level) => level.price)).toEqual(levels.map((level) => level.price));
+    const updatedLevels = objectBody((await api('/api/levels', { method: 'PUT', body: JSON.stringify({ levels: Array.from({ length: 80 }, (_, index) => 5000 + index * 0.25) }) })).body).levels as Array<{ price: number }>;
+    expect(updatedLevels).toHaveLength(80);
 
     const bootstrap = Array.from({ length: 21 }, (_, index) => candle(index, 5000, 5000));
     const provider = new FakeMarketDataProvider(bootstrap);

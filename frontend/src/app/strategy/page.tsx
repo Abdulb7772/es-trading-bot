@@ -142,10 +142,7 @@ export default function StrategyPage() {
                     </div>
                   </article>
                 </section>
-                <div className="action-row" style={{ marginTop: '16px' }}>
-                  <button className="button button-secondary" onClick={reset} disabled={!unsaved}>Reset</button>
-                  <button className="button button-primary" onClick={save} disabled={!unsaved}>Save configuration</button>
-                </div>
+                
               </form>}
           {savedMessage && <div className="unsaved-banner" style={{ color: 'var(--green)', borderColor: 'var(--green)', background: 'var(--green-soft)' }}><span className="status-dot" /> {savedMessage}</div>}
         </main>

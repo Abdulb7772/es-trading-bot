@@ -60,4 +60,42 @@ describe('runtime trading eligibility and daily risk', () => {
     expect(risk.eligibility(at('2026-09-11T17:59:59Z')).dailyLossLocked).toBe(true);
     expect(risk.eligibility(at('2026-09-11T18:00:00Z')).dailyLossLocked).toBe(false);
   });
+
+  it('keeps trading enabled after consecutive profitable trades', () => {
+    const risk = state();
+    risk.recordRealizedTrade({ result: 'WIN', pnl: 100, timestamp: at('2026-09-10T14:00:00Z') });
+    risk.recordRealizedTrade({ result: 'WIN', pnl: 50, timestamp: at('2026-09-10T15:00:00Z') });
+    expect(risk.eligibility(at('2026-09-10T15:30:00Z'))).toMatchObject({ dailyLossLocked: false, canOpenNewTrade: true, realizedPnl: 150 });
+  });
+
+  it('locks after the first loss and stays locked for every later setup', () => {
+    const risk = state();
+    risk.recordRealizedTrade({ result: 'WIN', pnl: 100, timestamp: at('2026-09-10T14:00:00Z') });
+    risk.recordRealizedTrade({ result: 'LOSS', pnl: -25, timestamp: at('2026-09-10T15:00:00Z') });
+    const first = risk.eligibility(at('2026-09-10T15:01:00Z'));
+    const second = risk.eligibility(at('2026-09-10T15:30:00Z'));
+    expect(first).toMatchObject({ dailyLossLocked: true, canOpenNewTrade: false, lockReason: 'First losing trade of the trading day.' });
+    expect(second).toMatchObject({ dailyLossLocked: true, canOpenNewTrade: false });
+    expect(first.lockTriggeredAt).toBe(at('2026-09-10T15:00:00Z').toISOString());
+  });
+
+  it('unlocks at the next trading day', () => {
+    const risk = state();
+    risk.recordRealizedTrade({ result: 'LOSS', pnl: -25, timestamp: at('2026-09-10T15:00:00Z') });
+    expect(risk.eligibility(at('2026-09-11T10:00:00Z'))).toMatchObject({ tradingDay: '2026-09-11', dailyLossLocked: false, canOpenNewTrade: true, realizedPnl: 0, lockReason: null, lockTriggeredAt: null });
+  });
+
+  it('restores a locked day from completed trades after restart', () => {
+    const store = new MemoryRiskStateStore();
+    const firstProcess = state(store);
+    firstProcess.restoreFromTrades([{ pnl: 100, timestamp: at('2026-09-10T14:00:00Z') }, { pnl: -25, timestamp: at('2026-09-10T15:00:00Z') }]);
+    const restarted = state(store);
+    expect(restarted.eligibility(at('2026-09-10T15:30:00Z'))).toMatchObject({ dailyLossLocked: true, canOpenNewTrade: false, realizedPnl: 75 });
+  });
+
+  it('restores unlocked state on restart after the trading day changes', () => {
+    const store = new MemoryRiskStateStore();
+    state(store).restoreFromTrades([{ pnl: -25, timestamp: at('2026-09-10T15:00:00Z') }]);
+    expect(state(store).eligibility(at('2026-09-11T10:00:00Z'))).toMatchObject({ dailyLossLocked: false, canOpenNewTrade: true });
+  });
 });

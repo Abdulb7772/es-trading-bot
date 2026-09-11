@@ -23,7 +23,7 @@ import { z } from 'zod';
     close: finiteNumber,
     volume: finiteNumber.nonnegative().optional(),
     symbol: z.literal(ES_SYMBOL),
-    timeframe: timeframeSchema,
+    timeframe: z.literal('15m'),
     isClosed: z.boolean()
   }).superRefine((candle, context) => {
     if (candle.high < Math.max(candle.open, candle.close)) {
@@ -58,7 +58,7 @@ import { z } from 'zod';
 
   export const strategyConfigSchema = z.object({
     symbol: z.literal(ES_SYMBOL),
-    timeframe: timeframeSchema,
+    timeframe: z.literal('15m'),
     emaFastPeriod: z.number().int().positive().default(9),
     emaSlowPeriod: z.number().int().positive().default(21),
     stopPoints: positiveNumber.default(10),
@@ -142,7 +142,14 @@ import { z } from 'zod';
   export interface SetupEvaluation {
     readonly accepted: boolean;
     readonly side: TradingSide | null;
+    readonly candle1: Candle | null;
+    readonly candle2: Candle | null;
+    readonly candle3: Candle | null;
+    readonly entryPrice: number | null;
+    readonly brokenLevel: SupportResistanceLevel | null;
     readonly candleTimestamps: readonly Date[];
+    readonly ema9: number | null;
+    readonly ema21: number | null;
     readonly emaFast: number | null;
     readonly emaSlow: number | null;
     readonly playedLevel: SupportResistanceLevel | null;
@@ -164,6 +171,9 @@ import { z } from 'zod';
     readonly canOpenNewTrade: boolean;
     readonly dailyLossLocked: boolean;
     readonly tradingWindowOpen: boolean;
+    readonly lockReason?: string | null;
+    readonly lockTriggeredAt?: string | null;
+    readonly realizedPnl?: number;
   }
 
   export const tradingDecisionActionSchema = z.enum(['NO_TRADE', 'ENTER_LONG', 'ENTER_SHORT']);

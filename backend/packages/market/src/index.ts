@@ -33,6 +33,8 @@ export interface MarketDataProvider {
 
 export interface ExecutionProvider {
   readonly execute: (decision: TradingDecision) => Promise<void> | void;
+  readonly onMarketBar?: (bar: MarketBar) => Promise<void> | void;
+  readonly reconcile?: () => Promise<void> | void;
 }
 
 export type MarketRuntimeState = 'STARTING' | 'READY' | 'RECOVERY_REQUIRED' | 'DISCONNECTED' | 'STOPPED';
@@ -172,8 +174,8 @@ export class CandleBuilder {
   private current: CandleAccumulator | null = null;
 
   constructor(private readonly options: CandleBuilderOptions) {
-    if (!Number.isInteger(options.timeframeMinutes) || options.timeframeMinutes <= 0) {
-      throw new RangeError('Candle timeframe must be a positive integer in minutes.');
+    if (options.timeframeMinutes !== 15) {
+      throw new RangeError('The active /ES strategy requires 15-minute candles.');
     }
   }
 
@@ -221,7 +223,7 @@ export class CandleBuilder {
       close: value.close,
       volume: value.volume,
       symbol: '/ES',
-      timeframe: `${this.options.timeframeMinutes}m`,
+      timeframe: '15m',
       isClosed: true
     };
   }
@@ -298,6 +300,7 @@ export class MarketRuntime {
 
   async start(): Promise<void> {
     if (this.running) return;
+    await this.options.execution.reconcile?.();
     this.running = true;
     const bootstrap = await this.options.provider.bootstrap();
     for (const candle of bootstrap) this.acceptCompletedCandle(candle);
@@ -342,6 +345,7 @@ export class MarketRuntime {
     }
     if (this.seenEventIds.has(event.id)) return;
     this.seenEventIds.add(event.id);
+    await this.options.execution.onMarketBar?.(event.bar);
     const completed = this.builder.update(event.bar);
     if (completed) this.acceptCompletedCandle(completed);
   }

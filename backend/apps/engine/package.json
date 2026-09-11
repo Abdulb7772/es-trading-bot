@@ -12,6 +12,7 @@
     "@es-trading/logging": "*",
     "@es-trading/simulation": "*",
     "@es-trading/shared": "*",
+    "@es-trading/topstepx": "*",
     "dotenv": "^16.4.7",
     "tsx": "^4.19.2"
   }

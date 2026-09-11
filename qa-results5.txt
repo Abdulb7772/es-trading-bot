@@ -1,0 +1,88 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Users/abdul/Desktop/es-trading-bot[39m
+
+ [31m❯[39m backend/tests/qa/deterministic-qa-suite.test.ts [2m([22m[2m13 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[90m 147[2mms[22m[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-003: rejects long Candle 3 color[90m 8[2mms[22m[31m[39m
+[31m     → expected 'CANDLE_2_COLOR_INVALID' to be 'CANDLE_3_COLOR_INVALID' // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-004: accepts valid long with all green candles[90m 4[2mms[22m[31m[39m
+[31m     → expected false to be true // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-005: rejects long break - C3 did not close beyond level[90m 4[2mms[22m[31m[39m
+[31m     → expected 'CANDLE_2_COLOR_INVALID' to be 'CANDLE_3_DID_NOT_BREAK_LEVEL' // Object.is equality[39m
+[31m   [31m×[31m REQ-LONG[2m > [22mLONG-007: rejects long EMA alignment invalid[90m 2[2mms[22m[31m[39m
+[31m     → expected 'CANDLE_2_COLOR_INVALID' to be 'EMA_ALIGNMENT_INVALID' // Object.is equality[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 4 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-003: rejects long Candle 3 color
+[31m[1mAssertionError[22m: expected 'CANDLE_2_COLOR_INVALID' to be 'CANDLE_3_COLOR_INVALID' // Object.is equality[39m
+
+Expected: [32m"CANDLE_[7m3[27m_COLOR_INVALID"[39m
+Received: [31m"CANDLE_[7m2[27m_COLOR_INVALID"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m116:37[22m[39m
+    [90m114| [39m    ]))[33m;[39m
+    [90m115| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m116| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'CANDLE_3_COLOR_INVALID'[39m)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m117| [39m  })[33m;[39m
+    [90m118| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-004: accepts valid long with all green candles
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m125:29[22m[39m
+    [90m123| [39m      [34mcandle[39m([34m3[39m[33m,[39m [34m5010[39m[33m,[39m [34m5015[39m)  [90m// C3: green[39m
+    [90m124| [39m    ]))[33m;[39m
+    [90m125| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m126| [39m    [34mexpect[39m(result[33m.[39mside)[33m.[39m[34mtoBe[39m([32m'LONG'[39m)[33m;[39m
+    [90m127| [39m    [34mexpect[39m(result[33m.[39mentryPrice)[33m.[39m[34mtoBe[39m([34m5015[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-005: rejects long break - C3 did not close beyond level
+[31m[1mAssertionError[22m: expected 'CANDLE_2_COLOR_INVALID' to be 'CANDLE_3_DID_NOT_BREAK_LEVEL' // Object.is equality[39m
+
+Expected: [32m"CANDLE_[7m3_DID_NOT_BREAK_LEVEL[27m"[39m
+Received: [31m"CANDLE_[7m2_COLOR_INVALID[27m"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m137:37[22m[39m
+    [90m135| [39m    ]))[33m;[39m
+    [90m136| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m137| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'CANDLE_3_DID_NOT_BREAK_LEVEL[39m…
+    [90m   | [39m                                    [31m^[39m
+    [90m138| [39m  })[33m;[39m
+    [90m139| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m backend/tests/qa/deterministic-qa-suite.test.ts[2m > [22mREQ-LONG[2m > [22mLONG-007: rejects long EMA alignment invalid
+[31m[1mAssertionError[22m: expected 'CANDLE_2_COLOR_INVALID' to be 'EMA_ALIGNMENT_INVALID' // Object.is equality[39m
+
+Expected: [32m"[7mEMA_ALIGNMENT[27m_INVALID"[39m
+Received: [31m"[7mCANDLE_2_COLOR[27m_INVALID"[39m
+
+[36m [2m❯[22m backend/tests/qa/deterministic-qa-suite.test.ts:[2m147:37[22m[39m
+    [90m145| [39m    ][33m,[39m [34m99[39m[33m,[39m [34m101[39m))[33m;[39m [90m// EMA9 < EMA21[39m
+    [90m146| [39m    [34mexpect[39m(result[33m.[39maccepted)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m147| [39m    [34mexpect[39m(result[33m.[39mreasons[[34m0[39m][33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m'EMA_ALIGNMENT_INVALID'[39m)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m148| [39m  })[33m;[39m
+    [90m149| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[90m (13)[39m
+[2m   Start at [22m 22:13:51
+[2m   Duration [22m 1.07s[2m (transform 154ms, setup 0ms, collect 221ms, tests 147ms, environment 0ms, prepare 231ms)[22m
+
