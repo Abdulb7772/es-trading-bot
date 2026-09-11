@@ -17,6 +17,8 @@ export interface ApiServerOptions {
   readonly services?: BackendApplicationServices;
 }
 
+const allowedOrigin = globalThis.process.env.FRONTEND_URL?.trim().replace(/\/+$/, '') || '*';
+
 async function readJson(request: IncomingMessage): Promise<unknown> {
   let body = '';
   for await (const chunk of request) body += chunk;
@@ -25,7 +27,7 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
 
 function send(response: ServerResponse, status: number, payload: unknown): void {
   response.statusCode = status;
-  response.setHeader('access-control-allow-origin', globalThis.process.env.FRONTEND_URL ?? '*');
+  response.setHeader('access-control-allow-origin', allowedOrigin);
   response.setHeader('access-control-allow-methods', 'GET,POST,PUT,OPTIONS');
   response.setHeader('access-control-allow-headers', 'content-type');
   response.setHeader('vary', 'Origin');
@@ -45,7 +47,7 @@ export function createApiServer(options: ApiServerOptions = {}): Server {
       const path = new globalThis.URL(request.url ?? '/', 'http://localhost').pathname;
       if (method === 'OPTIONS') {
         response.statusCode = 204;
-        response.setHeader('access-control-allow-origin', globalThis.process.env.FRONTEND_URL ?? '*');
+        response.setHeader('access-control-allow-origin', allowedOrigin);
         response.setHeader('access-control-allow-methods', 'GET,POST,PUT,OPTIONS');
         response.setHeader('access-control-allow-headers', 'content-type');
         response.setHeader('vary', 'Origin');
