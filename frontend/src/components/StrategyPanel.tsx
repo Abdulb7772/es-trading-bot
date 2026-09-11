@@ -5,6 +5,7 @@ import { Badge } from './Badge';
 export function useStrategyState() {
   const [enabled, setEnabled] = useState<boolean>(false);
   const [dryRun, setDryRun] = useState<boolean>(true);
+  const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
   const [signalState, setSignalState] = useState<'none' | 'long' | 'short'>('none');
   const [lastEvaluated, setLastEvaluated] = useState<{ direction: string; accepted: boolean; timestamp: Date; entry: number; brokenLevel: number | null; nextLevel: number | null; ema9: number; ema21: number; breathingRoom: number | null; rejectionReason?: string } | null>(null);
   const [lastAccepted, setLastAccepted] = useState<{ direction: string; timestamp: Date; entry: number; brokenLevel: number; nextLevel: number; reasoning: string } | null>(null);
@@ -15,6 +16,8 @@ export function useStrategyState() {
     setEnabled,
     dryRun,
     setDryRun,
+    showConfirmation,
+    setShowConfirmation,
     signalState,
     setSignalState,
     lastEvaluated,
@@ -35,7 +38,9 @@ export function StrategyPanel() {
     signalState,
     lastEvaluated,
     lastAccepted,
-    lastRejected
+    lastRejected,
+    showConfirmation,
+    setShowConfirmation
   } = useStrategyState();
 
   return (

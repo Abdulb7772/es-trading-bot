@@ -16,9 +16,9 @@ export function usePositionState() {
     // Simulate position updates
     const interval = setInterval(() => {
       // Random position state for demo
-      const sides = ['flat', 'long', 'short'];
-      const side = sides[Math.floor(Math.random() * sides.length)];
-      setPositionSide(side);
+const sides = ['flat', 'long', 'short'] as const;
+const side = sides[Math.floor(Math.random() * sides.length)];
+setPositionSide(side);
       
       if (side === 'flat') {
         setQuantity(1);
