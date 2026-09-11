@@ -14,7 +14,7 @@ export default function TradesPage() {
   }, []);
 
   return (
-    <div className="app-shell">
+    <div className="dashboard-shell">
       <Nav activeLabel="Trades" />
       <main className="main-content">
         <div className="page-heading">
@@ -22,9 +22,9 @@ export default function TradesPage() {
         </div>
         <section className="card">
           <div className="card-header"><div><h2 className="card-title">Recorded trades</h2><p className="card-caption">Latest execution activity</p></div></div>
-          <div className="panel-body">
+          <div className="panel-body trades-panel-body">
             {error ? <div className="empty-state">{error}</div> : trades.length === 0 ? <div className="empty-state">No trades recorded in this session.</div> : (
-              <div className="table-wrap"><table><thead><tr><th>Time</th><th>Side</th><th>Entry / exit</th><th>Contracts</th><th>P&amp;L</th><th>Status</th></tr></thead><tbody>{trades.map((trade) => <tr key={trade.id}><td className="mono">{trade.time}</td><td><span className={`side-label ${trade.side === 'short' ? 'short' : ''}`}>{trade.side}</span></td><td className="mono">{trade.entry.toLocaleString('en-US')} {trade.exit ? `/ ${trade.exit.toLocaleString('en-US')}` : ''}</td><td className="mono">{trade.contracts}</td><td className={`mono ${trade.pnl >= 0 ? 'positive' : 'negative'}`}>{trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)}</td><td>{trade.status}</td></tr>)}</tbody></table></div>
+              <div className="table-wrap trades-table-wrap"><table className="trades-table"><thead><tr><th>Time</th><th>Side</th><th>Entry / exit</th><th>Contracts</th><th>P&amp;L</th><th>Status</th></tr></thead><tbody>{trades.map((trade) => <tr key={trade.id}><td className="mono">{trade.time}</td><td><span className={`side-label ${trade.side === 'short' ? 'short' : ''}`}>{trade.side}</span></td><td className="mono">{trade.entry.toLocaleString('en-US')} {trade.exit ? `/ ${trade.exit.toLocaleString('en-US')}` : ''}</td><td className="mono">{trade.contracts}</td><td className={`mono ${trade.pnl >= 0 ? 'positive' : 'negative'}`}>{trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)}</td><td><span className={`trade-status ${trade.status}`}>{trade.status}</span></td></tr>)}</tbody></table></div>
             )}
           </div>
         </section>
