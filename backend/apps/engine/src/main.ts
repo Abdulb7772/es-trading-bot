@@ -40,7 +40,7 @@ async function start(): Promise<void> {
 		}
 	}
 	await listenApiServer(createApiServer({ services }), Number(port));
-	logger.info({ host: globalThis.process.env.HOST ?? '0.0.0.0', port: Number(port) }, 'Backend API listening.');
+	logger.info({ port: Number(port) }, 'Backend API listening.');
 }
 
 void start().catch((error: unknown) => {
