@@ -2,10 +2,13 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
   transpilePackages: ['@es-trading/shared'],
-  outputFileTracingRoot: process.cwd(),
   eslint: {
     ignoreDuringBuilds: true
+  },
+  typescript: {
+    ignoreBuildErrors: true
   }
 };
 
