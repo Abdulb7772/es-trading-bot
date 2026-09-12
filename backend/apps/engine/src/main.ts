@@ -104,10 +104,11 @@ async function start(): Promise<void> {
 	});
 	const runtimeHolder: { runtime?: MarketRuntime } = {};
 	const getRuntime = () => runtimeHolder.runtime;
+	const dataDir = resolve(workspaceDirectory, 'backend', 'data');
 	let services;
 	if (!uri) {
 		logger.warn('MongoDB configuration is unavailable; API starting in degraded local mode.');
-		services = createBackendApplicationServices({ riskState, getRuntime });
+		services = createBackendApplicationServices({ riskState, getRuntime, dataDirectory: dataDir });
 	} else {
 		const database = new MongoDatabase({ uri, databaseName: globalThis.process.env.MONGODB_DATABASE ?? 'es_trading_bot' });
 		try {
@@ -115,7 +116,7 @@ async function start(): Promise<void> {
 		} catch (error: unknown) {
 			const message = error instanceof Error ? error.message : 'Unknown MongoDB connection error.';
 			logger.warn({ error: message }, 'MongoDB unavailable; API starting in degraded local mode.');
-			services = createBackendApplicationServices({ riskState, getRuntime });
+			services = createBackendApplicationServices({ riskState, getRuntime, dataDirectory: dataDir });
 		}
 	}
 	await listenApiServer(createApiServer({ services }), Number(port));

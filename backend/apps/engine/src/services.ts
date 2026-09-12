@@ -25,6 +25,8 @@ import type { StrategyEvaluation, Trade } from '@es-trading/shared';
 import { z } from 'zod';
 import type { TradingRiskState } from '@es-trading/risk';
 import type { MarketRuntime } from '@es-trading/market';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
 
 const healthSchema = z.object({ status: z.literal('ok'), service: z.string(), time: z.string() });
 const fixtureSchema = z.object({ id: z.string(), name: z.string(), description: z.string() });
@@ -81,6 +83,15 @@ export interface ApplicationServiceOptions {
   readonly database?: MongoDatabase;
   readonly riskState?: TradingRiskState;
   readonly getRuntime?: () => MarketRuntime | undefined;
+  readonly dataDirectory?: string;
+}
+
+function loadJsonFile<T>(filePath: string, fallback: T): T {
+  try { return existsSync(filePath) ? JSON.parse(readFileSync(filePath, 'utf8')) as T : fallback; } catch { return fallback; }
+}
+
+function saveJsonFile(filePath: string, data: unknown): void {
+  try { mkdirSync(dirname(filePath), { recursive: true }); writeFileSync(filePath, JSON.stringify(data, null, 2)); } catch { /* best-effort */ }
 }
 
 export async function createPersistentBackendApplicationServices(database: MongoDatabase, options: Pick<ApplicationServiceOptions, 'riskState' | 'getRuntime'> = {}): Promise<BackendApplicationServices> {
@@ -91,8 +102,11 @@ export async function createPersistentBackendApplicationServices(database: Mongo
 }
 
 export function createBackendApplicationServices(options: ApplicationServiceOptions = {}): BackendApplicationServices {
-  let config = options.initialData?.config ?? defaultConfig;
-  let levels = options.initialData?.levels ?? defaultLevels;
+  const dataDir = options.dataDirectory;
+  const diskConfig = dataDir ? loadJsonFile<StrategyConfig | null>(resolve(dataDir, 'config.json'), null) : null;
+  const diskLevels = dataDir ? loadJsonFile<LevelSet | null>(resolve(dataDir, 'levels.json'), null) : null;
+  let config = diskConfig ?? options.initialData?.config ?? defaultConfig;
+  let levels = diskLevels ?? options.initialData?.levels ?? defaultLevels;
   const evaluations: StrategyEvaluation[] = [...(options.initialData?.evaluations ?? [])];
   const trades: Trade[] = [...(options.initialData?.trades ?? [])];
   const logs: LogEntry[] = [...(options.initialData?.logs ?? [])];
@@ -102,6 +116,7 @@ export function createBackendApplicationServices(options: ApplicationServiceOpti
     validateLevelCount(normalized);
     levels = levelSetSchema.parse({ ...levels, levels: normalized.map((price, index) => ({ id: `level-${index + 1}`, price })), updatedAt: new Date().toISOString() });
     if (options.database) void options.database.saveLevels(levels);
+    if (dataDir) saveJsonFile(resolve(dataDir, 'levels.json'), levels);
     options.getRuntime?.()?.updateLevels(levels.levels.map((l) => ({ id: l.id, price: l.price, active: true })));
     return levels;
   };
@@ -127,7 +142,7 @@ export function createBackendApplicationServices(options: ApplicationServiceOpti
       return currentMarketSchema.parse({ symbol, mode: 'Simulation', price: 0, change: 0, changePercent: 0, lastCandle: new Date(0).toISOString(), ema9: null, ema21: null });
     },
     getConfig: () => strategyConfigContractSchema.parse(config),
-    updateConfig: (input) => { config = strategyConfigSchema.parse(input); if (options.database) void options.database.saveConfig(config); options.getRuntime?.()?.updateConfig(config); return strategyConfigContractSchema.parse(config); },
+    updateConfig: (input) => { config = strategyConfigSchema.parse(input); if (options.database) void options.database.saveConfig(config); if (dataDir) saveJsonFile(resolve(dataDir, 'config.json'), config); options.getRuntime?.()?.updateConfig(config); return strategyConfigContractSchema.parse(config); },
     getLevels: () => levelSetSchema.parse(levels),
     updateLevels: (input) => replaceLevels(levelsRequestSchema.parse(input).levels),
     updateLevelsText: (input) => {
