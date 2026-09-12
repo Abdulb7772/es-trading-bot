@@ -77,6 +77,6 @@ export async function runSimulation(input: SimulationRequest): Promise<Simulatio
 export async function getDashboardData(): Promise<DashboardData> {
   const [system, market, levelSet, trades] = await Promise.all([getStatus(), getMarket(), getLevels(), getTrades()]);
   const levels: Level[] = levelSet.levels.map((level, index) => ({ id: level.id, label: level.label ?? `Level ${index + 1}`, price: level.price, kind: level.kind ?? 'pivot', distance: level.distance ?? 'Unavailable' }));
-  const snapshot: MarketSnapshot = { ...market, marketConnection: system.engine === 'offline' ? 'offline' : 'connected', ema9: null, ema21: null };
+  const snapshot: MarketSnapshot = { ...market, marketConnection: system.engine === 'offline' ? 'offline' : 'connected' };
   return { market: snapshot, system, levels, trades };
 }

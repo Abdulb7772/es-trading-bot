@@ -67,7 +67,9 @@ export const currentMarketSchema = z.object({
   price: finiteNumber,
   change: finiteNumber,
   changePercent: finiteNumber,
-  lastCandle: timestamp
+  lastCandle: timestamp,
+  ema9: finiteNumber.nullable(),
+  ema21: finiteNumber.nullable()
 });
 export type CurrentMarket = z.infer<typeof currentMarketSchema>;
 

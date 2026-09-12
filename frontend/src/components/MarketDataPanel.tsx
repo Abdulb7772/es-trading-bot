@@ -25,6 +25,8 @@ export function useMarketData() {
         });
         setLevelCount(levelSet.levels.length);
         setSymbol(config.symbol);
+        setEma9(market.ema9);
+        setEma21(market.ema21);
       } catch {
         // Backend unavailable
       }

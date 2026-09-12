@@ -116,7 +116,13 @@ export function createBackendApplicationServices(options: ApplicationServiceOpti
         lastHeartbeat: new Date().toISOString()
       });
     },
-    getMarket: () => currentMarketSchema.parse({ symbol: '/ES', mode: 'Simulation', price: 0, change: 0, changePercent: 0, lastCandle: new Date(0).toISOString() }),
+    getMarket: () => {
+      const rt = options.getRuntime?.();
+      const live = rt?.currentMarket();
+      const symbol = config.symbol ?? '/ES';
+      if (live && live.price !== 0) return currentMarketSchema.parse({ symbol, mode: 'Practice', price: live.price, change: live.change, changePercent: live.changePercent, lastCandle: live.lastCandle.toISOString(), ema9: live.ema9, ema21: live.ema21 });
+      return currentMarketSchema.parse({ symbol, mode: 'Simulation', price: 0, change: 0, changePercent: 0, lastCandle: new Date(0).toISOString(), ema9: null, ema21: null });
+    },
     getConfig: () => strategyConfigContractSchema.parse(config),
     updateConfig: (input) => { config = strategyConfigSchema.parse(input); if (options.database) void options.database.saveConfig(config); options.getRuntime?.()?.updateConfig(config); return strategyConfigContractSchema.parse(config); },
     getLevels: () => levelSetSchema.parse(levels),

@@ -347,6 +347,16 @@ export class MarketRuntime {
     return { events: [...this.events], candles: [...this.completedCandles] };
   }
 
+  currentMarket(): { price: number; change: number; changePercent: number; lastCandle: Date; ema9: number | null; ema21: number | null } {
+    const candles = this.completedCandles;
+    if (candles.length === 0) return { price: 0, change: 0, changePercent: 0, lastCandle: new Date(0), ema9: null, ema21: null };
+    const last = candles[candles.length - 1];
+    const prev = candles.length > 1 ? candles[candles.length - 2] : null;
+    const change = prev ? last.close - prev.close : 0;
+    const changePercent = prev && prev.close !== 0 ? (change / prev.close) * 100 : 0;
+    return { price: last.close, change, changePercent, lastCandle: last.timestamp, ema9: calculateStandardEma9(candles), ema21: calculateStandardEma21(candles) };
+  }
+
   private async handle(event: MarketEvent): Promise<void> {
     if (event.type === 'connected') {
       this.emit({ type: 'market.connected', at: event.at, sequence: 0 });
