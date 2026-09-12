@@ -27,6 +27,7 @@ backend/logs/*
 !backend/logs/.gitkeep
 backend/levels/*
 !backend/levels/.gitkeep
+!backend/levels/*.csv
 legacy/tre_bot/**/__pycache__/
 legacy/tre_bot/**/*.pyc
 .DS_Store
