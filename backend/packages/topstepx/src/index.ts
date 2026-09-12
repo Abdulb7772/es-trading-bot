@@ -156,7 +156,7 @@ export class TopstepXRestAdapter implements TopstepXAdapter {
     const startTime = new Date(endTime.getTime() - Math.max(limit, 21) * 15 * 60_000);
     const result = await this.request('/api/History/retrieveBars', {
       contractId: contract.id,
-      live: true,
+      live: false,
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
       unit: 2,
@@ -173,7 +173,7 @@ export class TopstepXRestAdapter implements TopstepXAdapter {
     const startTime = new Date(endTime.getTime() - Math.max(limit, 3) * 60_000);
     const result = await this.request('/api/History/retrieveBars', {
       contractId: contract.id,
-      live: true,
+      live: false,
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
       unit: 2,
@@ -253,21 +253,23 @@ export class TopstepXRestAdapter implements TopstepXAdapter {
       headers: { 'content-type': 'application/json', ...(this.token ? { authorization: `Bearer ${this.token}` } : {}) },
       body: JSON.stringify(body)
     });
-    const result = await response.json();
+    const text = await response.text();
+    let result: unknown;
+    try { result = text ? JSON.parse(text) : null; } catch { throw new Error(`TopstepX ${path} returned non-JSON (HTTP ${response.status}): ${text.slice(0, 200)}`); }
     if (!response.ok || (result !== null && typeof result === 'object' && 'success' in result && !(result as { success: unknown }).success)) throw new Error(`TopstepX request ${path} failed with HTTP ${response.status}.`);
     return result;
   }
 
   private async resolveEsContract(): Promise<TopstepXContract> {
     const searchText = this.symbol === MES_SYMBOL ? 'MES' : 'ES';
-    const result = await this.request('/api/Contract/search', { searchText, live: true });
+    const result = await this.request('/api/Contract/search', { searchText, live: false });
     const contracts = responseItems(result, 'contracts').filter((contract) => {
       const description = String(contract.description ?? '');
       const symbolId = String(contract.symbolId ?? '');
       const name = String(contract.name ?? '');
       if (!contract.activeContract) return false;
       if (this.symbol === MES_SYMBOL) {
-        return symbolId === 'F.US.MC' && name.startsWith('MES');
+        return symbolId === 'F.US.MES' && name.startsWith('MES');
       }
       return symbolId === 'F.US.EP' && name.startsWith('ES') && !name.startsWith('MES');
     });

@@ -14,7 +14,8 @@ function fakeHttp(responses: readonly ResponseData[]) {
     return {
       ok: true,
       status: response.status ?? 200,
-      json: async () => response.payload
+      json: async () => response.payload,
+      text: async () => JSON.stringify(response.payload)
     };
   };
   return { http, calls };
@@ -48,7 +49,7 @@ describe('active TopstepX integration is /ES-only', () => {
     expect(histCall).toBeDefined();
     const histBody = JSON.parse(histCall!.body);
     expect(histBody.contractId).toBe('es-dec');
-    expect(histBody.live).toBe(true);
+    expect(histBody.live).toBe(false);
     expect(histBody.unit).toBe(2);
     expect(histBody.unitNumber).toBe(15);
   });

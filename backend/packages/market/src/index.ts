@@ -317,12 +317,12 @@ export class MarketRuntime {
 
   async start(): Promise<void> {
     if (this.running) return;
-    await this.options.execution.reconcile?.();
     this.running = true;
     const bootstrap = await this.options.provider.bootstrap();
     for (const candle of bootstrap) {
       try { this.acceptCompletedCandle(candle); } catch { /* skip invalid bootstrap candle */ }
     }
+    await this.options.execution.reconcile?.();
     this.unsubscribe = this.options.provider.subscribe((event) => {
       this.processing = this.processing.then(() => this.handle(event));
     });
