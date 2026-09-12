@@ -20,10 +20,7 @@ import { z } from 'zod';
 import type { DashboardData, Level, MarketSnapshot } from './types';
 
 const fixtureSchema = z.object({ id: z.string(), name: z.string(), description: z.string() });
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? (process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : '');
-if (!API_BASE_URL && process.env.NODE_ENV !== 'development') {
-  console.error('[API] NEXT_PUBLIC_API_URL is not set. Frontend cannot reach the backend. Set it to your backend URL (e.g. https://your-app.onrender.com).');
-}
+const API_BASE_URL = '';
 
 export type SimulationFixture = z.infer<typeof fixtureSchema>;
 
