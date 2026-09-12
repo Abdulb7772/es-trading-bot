@@ -320,7 +320,9 @@ export class MarketRuntime {
     await this.options.execution.reconcile?.();
     this.running = true;
     const bootstrap = await this.options.provider.bootstrap();
-    for (const candle of bootstrap) this.acceptCompletedCandle(candle);
+    for (const candle of bootstrap) {
+      try { this.acceptCompletedCandle(candle); } catch { /* skip invalid bootstrap candle */ }
+    }
     this.unsubscribe = this.options.provider.subscribe((event) => {
       this.processing = this.processing.then(() => this.handle(event));
     });
@@ -372,9 +374,13 @@ export class MarketRuntime {
     }
     if (this.seenEventIds.has(event.id)) return;
     this.seenEventIds.add(event.id);
-    await this.options.execution.onMarketBar?.(event.bar);
-    const completed = this.builder.update(event.bar);
-    if (completed) this.acceptCompletedCandle(completed);
+    try {
+      await this.options.execution.onMarketBar?.(event.bar);
+      const completed = this.builder.update(event.bar);
+      if (completed) this.acceptCompletedCandle(completed);
+    } catch (error) {
+      this.emit({ type: 'market.error', at: event.at, message: `Event processing failed: ${error instanceof Error ? error.message : String(error)}`, sequence: 0 });
+    }
   }
 
   private acceptCompletedCandle(candle: Candle): void {

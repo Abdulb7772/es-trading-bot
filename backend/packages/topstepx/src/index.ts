@@ -123,6 +123,16 @@ export class TopstepXRestAdapter implements TopstepXAdapter {
 
   async connect(): Promise<void> {
     if (this.token && this.contract) return;
+    await this.authenticate();
+  }
+
+  async reconnect(): Promise<void> {
+    this.token = null;
+    this.contract = null;
+    await this.authenticate();
+  }
+
+  private async authenticate(): Promise<void> {
     const result = await this.request('/api/Auth/loginKey', { userName: this.config.username, apiKey: this.config.apiKey });
     const record = asRecord(result);
     const token = record.token;
@@ -312,7 +322,13 @@ export class TopstepXPollingMarketProvider implements MarketDataProvider {
         this.lastTimestamp = timestamp.getTime();
         this.publish({ type: 'bar', id: `topstepx-${this.lastTimestamp}`, bar: { instrument: this.adapter.resolvedSymbol, timestamp, open: bar.open, high: bar.high, low: bar.low, close: bar.close, volume: bar.volume ?? 0 } });
       }
-    } catch (error) { this.publish({ type: 'error', at: new Date(), message: error instanceof Error ? error.message : 'TopstepX market polling failed.' }); }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'TopstepX market polling failed.';
+      this.publish({ type: 'error', at: new Date(), message });
+      if (message.includes('401') || message.includes('403') || message.includes('token') || message.includes('auth') || message.includes('not connected')) {
+        try { await this.adapter.reconnect(); } catch { /* will retry next tick */ }
+      }
+    }
   }
 
   private get adapterContractId(): string {
