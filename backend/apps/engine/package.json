@@ -7,11 +7,15 @@
     "simulate": "tsx src/simulate.ts"
   },
   "dependencies": {
+    "@es-trading/indicators": "*",
     "@es-trading/levels": "*",
     "@es-trading/database": "*",
     "@es-trading/logging": "*",
+    "@es-trading/market": "*",
+    "@es-trading/risk": "*",
     "@es-trading/simulation": "*",
     "@es-trading/shared": "*",
+    "@es-trading/strategy": "*",
     "@es-trading/topstepx": "*",
     "dotenv": "^16.4.7",
     "tsx": "^4.19.2"

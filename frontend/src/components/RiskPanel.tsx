@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Badge } from './Badge';
-import { getDailyState, getConfig } from '../domain/api-client';
+import { getDailyState, getConfig, getStatus } from '../domain/api-client';
 
 export function useRiskState() {
   const [quantity, setQuantity] = useState<number>(1);
@@ -26,6 +26,7 @@ export function useRiskState() {
         setCurrentTradingDay(dailyState.tradingDay);
         setRealizedPnl(dailyState.realizedPnl);
         setLockReason(dailyState.lockReason);
+        setDailyLossLimit(1000);
       } catch {
         // Backend unavailable
       }
