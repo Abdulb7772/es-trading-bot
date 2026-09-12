@@ -1,4 +1,5 @@
-import type { Candle, CandleColor, TradingSide } from '@es-trading/shared';
+import type { Candle, CandleColor, Instrument, TradingSide } from '@es-trading/shared';
+import { ES_SYMBOL, MES_SYMBOL } from '@es-trading/shared';
 
 export const EMA_FAST_PERIOD = 9;
 export const EMA_SLOW_PERIOD = 21;
@@ -24,8 +25,8 @@ function assertPeriod(period: number): void {
 }
 
 function assertCompletedCandle(candle: Candle): void {
-	if (candle.symbol !== '/ES') {
-		throw new Error(`Indicators only accept /ES candles; received ${candle.symbol}.`);
+	if (candle.symbol !== ES_SYMBOL && candle.symbol !== MES_SYMBOL) {
+		throw new Error(`Indicators only accept /ES or /MES candles; received ${candle.symbol}.`);
 	}
 	if (!candle.isClosed) {
 		throw new Error('Indicators only accept completed candles.');

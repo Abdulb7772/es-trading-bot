@@ -61,7 +61,7 @@ describe('current ES three-bar strategy', () => {
 
   it.each([2.99, 3, 3.01])('applies the unrounded short breathing-room boundary at %s points', (distance) => {
     const suppliedLevels = [{ id: 'resistance', price: 5000, active: true }, { id: 'next', price: 4999 - distance, active: true }];
-    const result = evaluateShortSetup(input([candle(1, 5000, 4995), candle(2, 4995, 4999.5), candle(3, 4999.5, 4999)], 90, 100, suppliedLevels));
+    const result = evaluateShortSetup(input([candle(1, 5000, 4997), candle(2, 4997, 4999.5), candle(3, 4999.5, 4999)], 90, 100, suppliedLevels));
     expect(result.accepted).toBe(distance >= 3);
     if (distance < 3) expect(result.reasons[0]?.details?.distance).toBeCloseTo(distance, 10);
     else expect(result.tradePlan?.breathingRoomPoints).toBeCloseTo(distance, 10);

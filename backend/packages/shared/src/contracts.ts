@@ -9,7 +9,7 @@ const levelsConfigSchema = z.object({
   selectionPolicy: z.enum(['UNSPECIFIED', 'NEAREST_RELEVANT'])
 });
 const strategyConfigContractShape = z.object({
-  symbol: z.literal('/ES'),
+  symbol: z.enum(['/ES', '/MES']),
   timeframe: z.literal('15m'),
   emaFastPeriod: z.number().int().positive(),
   emaSlowPeriod: z.number().int().positive(),
@@ -62,7 +62,7 @@ export const engineStatusSchema = z.object({
 export type EngineStatus = z.infer<typeof engineStatusSchema>;
 
 export const currentMarketSchema = z.object({
-  symbol: z.literal('/ES'),
+  symbol: z.enum(['/ES', '/MES']),
   mode: z.enum(['Practice', 'Simulation']),
   price: finiteNumber,
   change: finiteNumber,
@@ -90,7 +90,7 @@ export type TradingDayState = z.infer<typeof tradingDayStateSchema>;
 
 export const positionSchema = z.object({
   id: z.string().min(1),
-  symbol: z.literal('/ES'),
+  symbol: z.enum(['/ES', '/MES']),
   side: z.enum(['long', 'short']),
   quantity: z.number().int().positive(),
   entryPrice: finiteNumber,

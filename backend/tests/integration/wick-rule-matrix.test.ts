@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { evaluateLongSetup, evaluateShortSetup } from '@es-trading/strategy';
 import { strategyConfigSchema } from '@es-trading/shared';
-import type { Candle, StrategyInput, SupportResistanceLevel } from '@es-trading/shared';
+import type { Candle, StrategyInput, SupportResistanceLevel, SetupEvaluation, TradingSide } from '@es-trading/shared';
 
 const config = strategyConfigSchema.parse({
   symbol: '/ES',
@@ -61,18 +61,18 @@ function actual(evaluation: SetupEvaluation): string {
 }
 
 const wickCases: MatrixCase[] = [
-  { id: '1', description: 'C1 wick touches next, C3 not close beyond', placement: { candle: 0, amount: 0 }, expected: 'REJECTED', reason: 'LONG_WICK_NEXT_LEVEL_NOT_CLOSED', side: 'LONG' },
-  { id: '2', description: 'C2 wick touches next, C3 not close beyond', placement: { candle: 1, amount: 0 }, expected: 'REJECTED', reason: 'LONG_WICK_NEXT_LEVEL_NOT_CLOSED', side: 'LONG' },
-  { id: '3', description: 'C3 wick touches next, C3 not close beyond', placement: { candle: 2, amount: 0 }, expected: 'REJECTED', reason: 'LONG_WICK_NEXT_LEVEL_NOT_CLOSED', side: 'LONG' },
-  { id: '4', description: 'C3 closes beyond touched level', closeOffset: 5, expected: 'ACCEPTED', side: 'LONG' },
-  { id: '5', description: 'C3 crosses 2 levels beyond', closePrice: { LONG: 5025, SHORT: 4975 }, expected: 'ACCEPTED' },
+  { id: '1', description: 'C1 wick touches next, C3 not close beyond', placement: { candle: 0, amount: 0 }, expected: 'REJECTED:WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', reason: 'WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', side: 'LONG' },
+  { id: '2', description: 'C2 wick touches next, C3 not close beyond', placement: { candle: 1, amount: 0 }, expected: 'REJECTED:WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', reason: 'WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', side: 'LONG' },
+  { id: '3', description: 'C3 wick touches next, C3 not close beyond', placement: { candle: 2, amount: 0 }, expected: 'REJECTED:WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', reason: 'WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', side: 'LONG' },
+  { id: '4', description: 'C3 closes beyond touched level', closeOffset: 8, expected: 'ACCEPTED', side: 'LONG' },
+  { id: '5', description: 'C3 crosses 2 levels beyond', closePrice: { LONG: 5035, SHORT: 4965 }, expected: 'ACCEPTED' },
   { id: '6', description: 'C3 crosses 3 levels beyond', closePrice: { LONG: 5035, SHORT: 4965 }, expected: 'ACCEPTED' },
-  { id: '7', description: 'C3 wick 3rd, close between 2nd/3rd', placement: { candle: 2, amount: 0 }, closeOffset: 5, expected: 'REJECTED', reason: 'LONG_WICK_NEXT_LEVEL_NOT_CLOSED', side: 'LONG' },
-  { id: '8', description: 'Wick exactly touches level', placement: { candle: 2, amount: 0 }, expected: 'REJECTED', reason: 'LONG_WICK_NEXT_LEVEL_NOT_CLOSED', side: 'LONG' },
-  { id: '9', description: 'C3 closes exactly at level', closePrice: { LONG: 5030, SHORT: 4970 }, expected: 'REJECTED', reason: 'LONG_WICK_NEXT_LEVEL_NOT_CLOSED', side: 'LONG' },
-  { id: '10', description: 'Short C1 wick touches next', placement: { candle: 0, amount: 0 }, expected: 'REJECTED', reason: 'SHORT_WICK_NEXT_LEVEL_NOT_CLOSED', side: 'SHORT' },
-  { id: '11', description: 'Short C2 wick touches next', placement: { candle: 1, amount: 0 }, expected: 'REJECTED', reason: 'SHORT_WICK_NEXT_LEVEL_NOT_CLOSED', side: 'SHORT' },
-  { id: '12', description: 'Short C3 wick touches next', placement: { candle: 2, amount: 0 }, expected: 'REJECTED', reason: 'SHORT_WICK_NEXT_LEVEL_NOT_CLOSED', side: 'SHORT' }
+  { id: '7', description: 'C3 wick 3rd, close between 2nd/3rd', placement: { candle: 2, amount: 0 }, closeOffset: -10, expected: 'REJECTED:WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', reason: 'WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', side: 'LONG' },
+  { id: '8', description: 'Wick exactly touches level', placement: { candle: 2, amount: 0 }, expected: 'REJECTED:WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', reason: 'WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', side: 'LONG' },
+  { id: '9', description: 'C3 closes exactly at level', closePrice: { LONG: 5027, SHORT: 4973 }, expected: 'REJECTED:WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', reason: 'WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', side: 'LONG' },
+  { id: '10', description: 'Short C1 wick touches next', placement: { candle: 0, amount: 0 }, expected: 'REJECTED:WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', reason: 'WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', side: 'SHORT' },
+  { id: '11', description: 'Short C2 wick touches next', placement: { candle: 1, amount: 0 }, expected: 'REJECTED:WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', reason: 'WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', side: 'SHORT' },
+  { id: '12', description: 'Short C3 wick touches next', placement: { candle: 2, amount: 0 }, expected: 'REJECTED:WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', reason: 'WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', side: 'SHORT' }
 ];
 
 for (const side of ['LONG', 'SHORT']) {

@@ -3,13 +3,15 @@ import { calendarTradingDayResolver, MemoryRiskStateStore, TradingRiskState } fr
 import { evaluateDeterministicStrategy } from '@es-trading/strategy';
 import type {
   Candle,
+  Instrument,
   StrategyConfig,
   SupportResistanceLevel,
   TradingDecision
 } from '@es-trading/shared';
+import { ES_SYMBOL, MES_SYMBOL } from '@es-trading/shared';
 
 export interface MarketBar {
-  readonly instrument: '/ES';
+  readonly instrument: Instrument;
   readonly timestamp: Date;
   readonly open: number;
   readonly high: number;
@@ -41,7 +43,7 @@ export type MarketRuntimeState = 'STARTING' | 'READY' | 'RECOVERY_REQUIRED' | 'D
 
 export interface RecoveryPosition {
   readonly id: string;
-  readonly symbol: '/ES';
+  readonly symbol: Instrument;
   readonly side: 'LONG' | 'SHORT';
   readonly quantity: number;
   readonly entryPrice: number;
@@ -49,7 +51,7 @@ export interface RecoveryPosition {
 
 export interface RecoveryWorkingOrder {
   readonly id: string;
-  readonly symbol: '/ES';
+  readonly symbol: Instrument;
   readonly status: 'WORKING' | 'FILLED' | 'CANCELLED' | 'REJECTED' | 'UNKNOWN';
 }
 
@@ -158,6 +160,7 @@ export type MarketRuntimeEvent =
 
 export interface CandleBuilderOptions {
   readonly timeframeMinutes: number;
+  readonly symbol?: Instrument;
 }
 
 interface CandleAccumulator {
@@ -172,15 +175,17 @@ interface CandleAccumulator {
 
 export class CandleBuilder {
   private current: CandleAccumulator | null = null;
+  private readonly symbol: Instrument;
 
   constructor(private readonly options: CandleBuilderOptions) {
     if (options.timeframeMinutes !== 15) {
-      throw new RangeError('The active /ES strategy requires 15-minute candles.');
+      throw new RangeError('The active strategy requires 15-minute candles.');
     }
+    this.symbol = options.symbol ?? ES_SYMBOL;
   }
 
   update(bar: MarketBar): Candle | null {
-    if (bar.instrument !== '/ES') throw new Error('Only /ES market bars are supported.');
+    if (bar.instrument !== this.symbol) throw new Error(`Only ${this.symbol} market bars are supported.`);
     if (!(bar.timestamp instanceof Date) || !Number.isFinite(bar.timestamp.getTime())) throw new Error('Market bar timestamp must be valid.');
     const bucketSize = this.options.timeframeMinutes * 60_000;
     const bucket = Math.floor(bar.timestamp.getTime() / bucketSize) * bucketSize;
@@ -222,7 +227,7 @@ export class CandleBuilder {
       low: value.low,
       close: value.close,
       volume: value.volume,
-      symbol: '/ES',
+      symbol: this.symbol,
       timeframe: '15m',
       isClosed: true
     };
@@ -292,10 +297,22 @@ export class MarketRuntime {
   private running = false;
   private processing: Promise<void> = Promise.resolve();
   private sequence = 0;
+  private config: StrategyConfig;
+  private levels: readonly SupportResistanceLevel[];
 
   constructor(private readonly options: MarketRuntimeOptions) {
-    this.builder = new CandleBuilder({ timeframeMinutes: options.timeframeMinutes ?? 15 });
+    this.config = options.config;
+    this.levels = options.levels;
+    this.builder = new CandleBuilder({ timeframeMinutes: options.timeframeMinutes ?? 15, symbol: options.config.symbol });
     this.riskState = options.riskState ?? new TradingRiskState({ tradingDayResolver: calendarTradingDayResolver(), stateStore: new MemoryRiskStateStore() });
+  }
+
+  updateConfig(config: StrategyConfig): void {
+    this.config = config;
+  }
+
+  updateLevels(levels: readonly SupportResistanceLevel[]): void {
+    this.levels = levels;
   }
 
   async start(): Promise<void> {
@@ -351,13 +368,13 @@ export class MarketRuntime {
   }
 
   private acceptCompletedCandle(candle: Candle): void {
-    if (candle.symbol !== '/ES' || !candle.isClosed) throw new Error('Runtime accepts only completed /ES candles.');
+    if (candle.symbol !== this.config.symbol || !candle.isClosed) throw new Error(`Runtime accepts only completed ${this.config.symbol} candles.`);
     if (this.completedCandles.some((existing) => existing.timestamp.getTime() === candle.timestamp.getTime())) return;
     this.completedCandles.push(candle);
     const decision = evaluateDeterministicStrategy({
       candles: this.completedCandles,
-      levels: this.options.levels,
-      config: this.options.config,
+      levels: this.levels,
+      config: this.config,
       indicators: { emaFast: calculateStandardEma9(this.completedCandles), emaSlow: calculateStandardEma21(this.completedCandles) },
       eligibility: this.riskState.eligibility(candle.timestamp)
     });

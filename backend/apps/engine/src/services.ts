@@ -24,6 +24,7 @@ import {
 import type { StrategyEvaluation, Trade } from '@es-trading/shared';
 import { z } from 'zod';
 import type { TradingRiskState } from '@es-trading/risk';
+import type { MarketRuntime } from '@es-trading/market';
 
 const healthSchema = z.object({ status: z.literal('ok'), service: z.string(), time: z.string() });
 const fixtureSchema = z.object({ id: z.string(), name: z.string(), description: z.string() });
@@ -76,9 +77,10 @@ export interface ApplicationServiceOptions {
   readonly initialData?: Partial<DatabaseCollections>;
   readonly database?: MongoDatabase;
   readonly riskState?: TradingRiskState;
+  readonly getRuntime?: () => MarketRuntime | undefined;
 }
 
-export async function createPersistentBackendApplicationServices(database: MongoDatabase, options: Pick<ApplicationServiceOptions, 'riskState'> = {}): Promise<BackendApplicationServices> {
+export async function createPersistentBackendApplicationServices(database: MongoDatabase, options: Pick<ApplicationServiceOptions, 'riskState' | 'getRuntime'> = {}): Promise<BackendApplicationServices> {
   await database.connect();
   const data = await database.load();
   options.riskState?.restoreFromTrades(data.trades.filter((trade) => trade.status === 'closed' && trade.exit !== undefined).map((trade) => ({ pnl: trade.pnl, timestamp: new Date(trade.time) })));
@@ -97,15 +99,26 @@ export function createBackendApplicationServices(options: ApplicationServiceOpti
     validateLevelCount(normalized);
     levels = levelSetSchema.parse({ ...levels, levels: normalized.map((price, index) => ({ id: `level-${index + 1}`, price })), updatedAt: new Date().toISOString() });
     if (options.database) void options.database.saveLevels(levels);
+    options.getRuntime?.()?.updateLevels(levels.levels.map((l) => ({ id: l.id, price: l.price, active: true })));
     return levels;
   };
 
   return {
     getHealth: () => healthSchema.parse({ status: 'ok', service: 'engine', time: new Date().toISOString() }),
-    getStatus: () => systemStatusSchema.parse({ engine: 'operational', tradingEnabled: false, dailyLossLocked: false, dailyLossUsed: 0, dailyLossLimit: 1000, lastHeartbeat: new Date().toISOString() }),
+    getStatus: () => {
+      const eligibility = options.riskState?.eligibility(new Date());
+      return systemStatusSchema.parse({
+        engine: 'operational',
+        tradingEnabled: eligibility?.canOpenNewTrade ?? false,
+        dailyLossLocked: eligibility?.dailyLossLocked ?? false,
+        dailyLossUsed: eligibility?.realizedPnl ?? 0,
+        dailyLossLimit: 1000,
+        lastHeartbeat: new Date().toISOString()
+      });
+    },
     getMarket: () => currentMarketSchema.parse({ symbol: '/ES', mode: 'Simulation', price: 0, change: 0, changePercent: 0, lastCandle: new Date(0).toISOString() }),
     getConfig: () => strategyConfigContractSchema.parse(config),
-    updateConfig: (input) => { config = strategyConfigSchema.parse(input); if (options.database) void options.database.saveConfig(config); return strategyConfigContractSchema.parse(config); },
+    updateConfig: (input) => { config = strategyConfigSchema.parse(input); if (options.database) void options.database.saveConfig(config); options.getRuntime?.()?.updateConfig(config); return strategyConfigContractSchema.parse(config); },
     getLevels: () => levelSetSchema.parse(levels),
     updateLevels: (input) => replaceLevels(levelsRequestSchema.parse(input).levels),
     updateLevelsText: (input) => {

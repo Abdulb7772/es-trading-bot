@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Badge } from './Badge';
+import { getTrades } from '../domain/api-client';
 
 export function usePositionState() {
   const [positionSide, setPositionSide] = useState<'flat' | 'long' | 'short'>('flat');
@@ -13,33 +14,28 @@ export function usePositionState() {
   const [unrealizedPnL, setUnrealizedPnL] = useState<number>(0);
 
   useEffect(() => {
-    // Simulate position updates
-    const interval = setInterval(() => {
-      // Random position state for demo
-const sides = ['flat', 'long', 'short'] as const;
-const side = sides[Math.floor(Math.random() * sides.length)];
-setPositionSide(side);
-      
-      if (side === 'flat') {
-        setQuantity(1);
-        setEntry(0);
-        setStop(0);
-        setTarget(0);
-        setNextLevel(null);
-        setRealizedPnL(0);
-        setUnrealizedPnL(0);
-      } else {
-        const basePrice = 5000;
-        setQuantity(1);
-        setEntry(basePrice);
-        setStop(basePrice - 20);
-        setTarget(basePrice + 20);
-        setNextLevel(basePrice + 10);
-        setRealizedPnL((Math.random() - 0.5) * 50);
-        setUnrealizedPnL((Math.random() - 0.5) * 50);
+    const fetchTrades = async () => {
+      try {
+        const trades = await getTrades();
+        const openTrade = trades.find(t => t.status === 'open');
+        if (openTrade) {
+          setPositionSide(openTrade.side as 'long' | 'short');
+          setEntry(openTrade.entry);
+          setQuantity(openTrade.contracts);
+        } else {
+          setPositionSide('flat');
+          setEntry(0);
+        }
+        
+        const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
+        setRealizedPnL(totalPnl);
+      } catch {
+        // Backend unavailable
       }
-    }, 2000);
+    };
 
+    fetchTrades();
+    const interval = setInterval(fetchTrades, 10000);
     return () => clearInterval(interval);
   }, []);
 

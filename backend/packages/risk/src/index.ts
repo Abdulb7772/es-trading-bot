@@ -82,6 +82,7 @@ export interface TradingRiskStateOptions {
   readonly timeZone?: string;
   readonly cutoffHour?: number;
   readonly cutoffMinute?: number;
+  readonly maxDailyLoss?: number;
 }
 
 export class TradingRiskState {
@@ -90,6 +91,7 @@ export class TradingRiskState {
   private readonly timeZone: string;
   private readonly cutoffHour: number;
   private readonly cutoffMinute: number;
+  private readonly maxDailyLoss: number;
   private state: DailyRiskState | null;
 
   constructor(options: TradingRiskStateOptions) {
@@ -98,6 +100,7 @@ export class TradingRiskState {
     this.timeZone = options.timeZone ?? 'America/New_York';
     this.cutoffHour = options.cutoffHour ?? 16;
     this.cutoffMinute = options.cutoffMinute ?? 0;
+    this.maxDailyLoss = options.maxDailyLoss ?? 1000;
     const loaded = this.stateStore.load();
     this.state = loaded ? {
       ...loaded,
@@ -109,15 +112,16 @@ export class TradingRiskState {
   eligibility(timestamp: Date): TradingEligibility {
     const tradingDay = this.currentTradingDay(timestamp);
     this.ensureTradingDay(tradingDay);
-    const dailyLossLocked = this.state?.losingTradeRecorded ?? false;
+    const realizedPnl = this.state?.realizedPnl ?? 0;
+    const dailyLossLocked = (this.state?.losingTradeRecorded ?? false) || (this.maxDailyLoss > 0 && realizedPnl <= -this.maxDailyLoss);
     const tradingWindowOpen = this.isBeforeCutoff(timestamp);
     return {
       tradingDay,
       tradingWindowOpen,
       dailyLossLocked,
       canOpenNewTrade: tradingWindowOpen && !dailyLossLocked,
-      realizedPnl: this.state?.realizedPnl ?? 0,
-      lockReason: this.state?.lockReason ?? null,
+      realizedPnl,
+      lockReason: this.state?.lockReason ?? (dailyLossLocked && !this.state?.losingTradeRecorded ? `Daily loss limit of $${this.maxDailyLoss} reached.` : null),
       lockTriggeredAt: this.state?.lockTriggeredAt ?? null
     };
   }
@@ -127,12 +131,14 @@ export class TradingRiskState {
     this.ensureTradingDay(tradingDay);
     const current = this.state ?? { tradingDay, losingTradeRecorded: false, realizedPnl: 0, lockReason: null, lockTriggeredAt: null };
     const firstLoss = !current.losingTradeRecorded && trade.result === 'LOSS';
+    const newPnl = current.realizedPnl + trade.pnl;
+    const lossLimitHit = this.maxDailyLoss > 0 && newPnl <= -this.maxDailyLoss && !current.losingTradeRecorded;
     const next: DailyRiskState = {
       tradingDay,
-      losingTradeRecorded: current.losingTradeRecorded || trade.result === 'LOSS',
-      realizedPnl: current.realizedPnl + trade.pnl,
-      lockReason: firstLoss ? 'First losing trade of the trading day.' : current.lockReason,
-      lockTriggeredAt: firstLoss ? trade.timestamp.toISOString() : current.lockTriggeredAt
+      losingTradeRecorded: current.losingTradeRecorded || trade.result === 'LOSS' || lossLimitHit,
+      realizedPnl: newPnl,
+      lockReason: firstLoss ? 'First losing trade of the trading day.' : lossLimitHit ? `Daily loss limit of $${this.maxDailyLoss} reached.` : current.lockReason,
+      lockTriggeredAt: (firstLoss || lossLimitHit) ? trade.timestamp.toISOString() : current.lockTriggeredAt
     };
     this.state = next;
     this.stateStore.save(next);

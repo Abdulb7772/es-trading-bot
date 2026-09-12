@@ -109,18 +109,18 @@ describe('REQ-LONG', () => {
   it('LONG-003: rejects long Candle 3 color', () => {
     const result = evaluateLongSetup(input([
       candle(1, 5000, 5005), // C1: green
-      candle(2, 5005, 5010), // C2: green
-      candle(3, 5010, 5010)  // C3: neutral (open == close)
+      candle(2, 5010, 5005), // C2: red (pullback)
+      candle(3, 5005, 5005)  // C3: neutral (open == close)
     ]));
     expect(result.accepted).toBe(false);
     expect(result.reasons[0]?.code).toBe('CANDLE_3_COLOR_INVALID');
   });
 
-  it('LONG-004: accepts valid long with all green candles', () => {
+  it('LONG-004: accepts valid long setup', () => {
     const result = evaluateLongSetup(input([
       candle(1, 5000, 5005), // C1: green
-      candle(2, 5005, 5010), // C2: green
-      candle(3, 5010, 5015)  // C3: green
+      candle(2, 5005, 5002), // C2: red (pullback)
+      candle(3, 5002, 5015)  // C3: green (breakout)
     ]));
     expect(result.accepted).toBe(true);
     expect(result.side).toBe('LONG');
@@ -130,8 +130,8 @@ describe('REQ-LONG', () => {
   it('LONG-005: rejects long break - C3 did not close beyond level', () => {
     const result = evaluateLongSetup(input([
       candle(1, 5000, 5005), // C1: green
-      candle(2, 5005, 5010), // C2: green
-      candle(3, 5010, 5025)  // C3: green, but closes at 5025 < resistance 5030
+      candle(2, 5005, 4998), // C2: red (pullback)
+      candle(3, 4998, 4999)  // C3: green but close 4999 ≤ support 5000
     ]));
     expect(result.accepted).toBe(false);
     expect(result.reasons[0]?.code).toBe('CANDLE_3_DID_NOT_BREAK_LEVEL');
@@ -140,8 +140,8 @@ describe('REQ-LONG', () => {
   it('LONG-007: rejects long EMA alignment invalid', () => {
     const result = evaluateLongSetup(input([
       candle(1, 5000, 5005),
-      candle(2, 5005, 5010),
-      candle(3, 5010, 5020)
+      candle(2, 5005, 5002), // C2: red (pullback)
+      candle(3, 5002, 5020)
     ], 99, 101)); // EMA9 < EMA21
     expect(result.accepted).toBe(false);
     expect(result.reasons[0]?.code).toBe('EMA_ALIGNMENT_INVALID');

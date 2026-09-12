@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Badge } from './Badge';
+import { getMarket, getLevels, getConfig } from '../domain/api-client';
 
 export function useMarketData() {
   const [currentPrice, setCurrentPrice] = useState<number>(0);
@@ -8,36 +9,42 @@ export function useMarketData() {
   const [ema9, setEma9] = useState<number | null>(null);
   const [ema21, setEma21] = useState<number | null>(null);
   const [levelCount, setLevelCount] = useState<number>(0);
+  const [symbol, setSymbol] = useState<string>('/ES');
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const basePrice = 5000 + Math.random() * 20 - 10;
-      setCurrentPrice(basePrice);
-      setCurrentCandle({
-        open: basePrice,
-        high: basePrice + 5,
-        low: basePrice - 5,
-        close: basePrice + (Math.random() - 0.5) * 3,
-        timestamp: new Date()
-      });
-      setEma9(basePrice + (Math.random() - 0.5) * 2);
-      setEma21(basePrice + (Math.random() - 0.5) * 3);
-      setLevelCount(85 + Math.floor(Math.random() * 15));
-    }, 1000);
+    const fetchData = async () => {
+      try {
+        const [market, levelSet, config] = await Promise.all([getMarket(), getLevels(), getConfig()]);
+        setCurrentPrice(market.price);
+        setCurrentCandle({
+          open: market.price,
+          high: market.price + 5,
+          low: market.price - 5,
+          close: market.price + (market.change ?? 0),
+          timestamp: new Date(market.lastCandle)
+        });
+        setLevelCount(levelSet.levels.length);
+        setSymbol(config.symbol);
+      } catch {
+        // Backend unavailable
+      }
+    };
 
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  return { currentPrice, currentCandle, ema9, ema21, levelCount };
+  return { currentPrice, currentCandle, ema9, ema21, levelCount, symbol };
 }
 
 export function MarketDataPanel() {
-  const { currentPrice, currentCandle, ema9, ema21, levelCount } = useMarketData();
+  const { currentPrice, currentCandle, ema9, ema21, levelCount, symbol } = useMarketData();
 
   return (
     <div className="market-panel">
       <div className="market-row">
-        <span className="market-label">Current /ES Price</span>
+        <span className="market-label">Current {symbol} Price</span>
         <span className="mono">{currentPrice.toFixed(2)}</span>
       </div>
       <div className="market-row">

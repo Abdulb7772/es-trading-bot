@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Nav } from '../../components/Nav';
 import { Badge } from '../../components/Badge';
@@ -9,19 +9,26 @@ import { MarketDataPanel } from '../../components/MarketDataPanel';
 import { StrategyPanel } from '../../components/StrategyPanel';
 import { RiskPanel } from '../../components/RiskPanel';
 import { PositionPanel } from '../../components/PositionPanel';
+import { getStatus } from '../../domain/api-client';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [showDisconnect, setShowDisconnect] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [mode, setMode] = useState<'dry_run' | 'practice'>('dry_run');
+  const [instrument, setInstrument] = useState<string>('/ES');
+  const [dailyLossLimit, setDailyLossLimit] = useState<number>(1000);
 
   useEffect(() => {
-    // Connection status monitoring
-    const interval = setInterval(() => {
-      // Status is managed internally by panels
-    }, 5000);
-    return () => clearInterval(interval);
+    const fetchStatus = async () => {
+      try {
+        const status = await getStatus();
+        setMode(status.tradingEnabled ? 'practice' : 'dry_run');
+      } catch {
+        // Backend unavailable
+      }
+    };
+    fetchStatus();
   }, []);
 
   return (
@@ -33,7 +40,7 @@ export default function DashboardPage() {
           <div className="topbar-status">
             <span className="status-dot" /> Backend online
             <span>Practice account</span>
-            <span className="mono">/ES</span>
+            <span className="mono">{instrument}</span>
           </div>
         </header>
         <main className="main-content">
@@ -44,6 +51,33 @@ export default function DashboardPage() {
             <RiskPanel />
             <PositionPanel />
           </div>
+          
+          <div className="config-section">
+            <h3>Configuration</h3>
+            <div className="config-row">
+              <label>Instrument</label>
+              <select 
+                value={instrument} 
+                onChange={(e) => setInstrument(e.target.value)}
+                className="config-select"
+              >
+                <option value="/ES">/ES (E-mini S&P 500)</option>
+                <option value="/MES">/MES (Micro E-mini S&P 500)</option>
+              </select>
+            </div>
+            <div className="config-row">
+              <label>Daily Loss Limit ($)</label>
+              <input 
+                type="number" 
+                value={dailyLossLimit} 
+                onChange={(e) => setDailyLossLimit(Number(e.target.value))}
+                min="0"
+                step="100"
+                className="config-input"
+              />
+            </div>
+          </div>
+
           {mode === 'dry_run' && (
             <div className="mode-banner">
               <span>Mode: DRY_RUN - Simulation only, no orders submitted</span>

@@ -2,6 +2,7 @@ import type {
   Candle,
   DecisionReason,
   DecisionReasonCode,
+  Instrument,
   SetupEvaluation,
   StrategyInput,
   SupportResistanceLevel,
@@ -10,25 +11,26 @@ import type {
   TradingDecisionAction,
   TradingSide
 } from '@es-trading/shared';
+import { ES_SYMBOL, MES_SYMBOL } from '@es-trading/shared';
 
 export type StrategyEngine = (input: StrategyInput) => TradingDecision;
 
 const descriptions: Readonly<Record<DecisionReasonCode, string>> = {
-  INSUFFICIENT_CANDLES: 'Three completed /ES candles are required.',
+  INSUFFICIENT_CANDLES: 'Three completed candles are required.',
   CANDLE_1_COLOR_INVALID: 'Candle 1 has the required direction color.',
   CANDLE_1_LOCATION_INVALID: 'Candle 1 did not open at the relevant level.',
   CANDLE_2_COLOR_INVALID: 'Candle 2 has the required opposite color.',
   CANDLE_3_COLOR_INVALID: 'Candle 3 has the required direction color.',
   CANDLE_3_DID_NOT_BREAK_LEVEL: 'Candle 3 did not close beyond the level being broken.',
   EMA_ALIGNMENT_INVALID: 'EMA9 and EMA21 are not aligned for this direction.',
-  WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL: 'Unused by the current three-bar strategy.',
-  INSUFFICIENT_BREATHING_ROOM: 'The next relevant level is less than 3 ES points from entry.',
+  WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL: 'A candle wick touched the next S/R level but Candle 3 did not close beyond it.',
+  INSUFFICIENT_BREATHING_ROOM: 'The next relevant level is less than 3 points from entry.',
   DAILY_LOSS_LOCKOUT: 'Unused as a strategy filter; risk management is outside setup evaluation.',
   TRADING_WINDOW_CLOSED: 'Unused as a strategy filter; trading hours are outside setup evaluation.',
   MALFORMED_LEVELS: 'A supplied level is not a finite numeric price.',
   NO_RELEVANT_SUPPORT_RESISTANCE_LEVEL: 'No relevant manual support or resistance level is available.',
   CANDLE_NOT_CLOSED: 'Every strategy candle must be completed.',
-  INVALID_INSTRUMENT: 'Every strategy candle must use /ES.'
+  INVALID_INSTRUMENT: 'Every strategy candle must use /ES or /MES.'
 };
 
 function makeReason(code: DecisionReasonCode, details?: Readonly<Record<string, string | number | boolean>>): DecisionReason {
@@ -72,7 +74,7 @@ function activeLevels(levels: readonly SupportResistanceLevel[]): readonly Suppo
 function validateInput(input: StrategyInput, side: TradingSide): SetupEvaluation | null {
   if (input.candles.length < 3) return makeEvaluation(side, input.candles, input, [makeReason('INSUFFICIENT_CANDLES')]);
   const candles = input.candles.slice(-3);
-  if (candles.some((candle) => candle.symbol !== '/ES')) return makeEvaluation(side, candles, input, [makeReason('INVALID_INSTRUMENT')]);
+  if (candles.some((candle) => candle.symbol !== ES_SYMBOL && candle.symbol !== MES_SYMBOL)) return makeEvaluation(side, candles, input, [makeReason('INVALID_INSTRUMENT')]);
   if (candles.some((candle) => !candle.isClosed || candle.timeframe !== '15m')) return makeEvaluation(side, candles, input, [makeReason('CANDLE_NOT_CLOSED')]);
   if (input.levels.some((level) => !Number.isFinite(level.price))) return makeEvaluation(side, candles, input, [makeReason('MALFORMED_LEVELS')]);
   return null;
@@ -87,8 +89,8 @@ function evaluateSide(input: StrategyInput, side: TradingSide): SetupEvaluation 
   const levels = activeLevels(input.levels);
   const long = side === 'LONG';
   const relevantLevel = long
-    ? [...levels].reverse().find((level) => level.price <= candle1.open)
-    : levels.find((level) => level.price >= candle1.open);
+    ? levels.find((level) => level.price >= candle1.open)
+    : [...levels].reverse().find((level) => level.price <= candle1.open);
 
   if (!relevantLevel) return makeEvaluation(side, candles, input, [makeReason('NO_RELEVANT_SUPPORT_RESISTANCE_LEVEL')]);
   if (long && candle1.open > relevantLevel.price || !long && candle1.open < relevantLevel.price) return makeEvaluation(side, candles, input, [makeReason('CANDLE_1_LOCATION_INVALID')], { playedLevel: relevantLevel, brokenLevel: relevantLevel });
@@ -116,20 +118,30 @@ function evaluateSide(input: StrategyInput, side: TradingSide): SetupEvaluation 
       nextLevelPrice: nextRelevantLevel.price,
       distance: breathingRoomPoints,
       minimumDistance: 3
-    })], { playedLevel: brokenLevel, brokenLevel, nextRelevantLevel, entryPrice }, `Breathing room ${breathingRoomPoints} ES points is below the required 3 ES points.`);
+    })], { playedLevel: brokenLevel, brokenLevel, nextRelevantLevel, entryPrice }, `Breathing room ${breathingRoomPoints} points is below the required 3 points.`);
   }
-  const hasLongWick = long ? candle3.high > nextRelevantLevel.price : false;
-  const hasShortWick = !long ? candle3.low < nextRelevantLevel.price : false;
-  if (hasLongWick) return makeEvaluation(side, candles, input, [makeReason('LONG_WICK_NEXT_LEVEL_NOT_CLOSED', { entryPrice, nextLevelPrice: nextRelevantLevel.price })], { playedLevel: brokenLevel, brokenLevel, nextRelevantLevel, entryPrice }, `Long wick touched next level ${nextRelevantLevel.price} but candle 3 did not close beyond it.`);
-  if (hasShortWick) return makeEvaluation(side, candles, input, [makeReason('SHORT_WICK_NEXT_LEVEL_NOT_CLOSED', { entryPrice, nextLevelPrice: nextRelevantLevel.price })], { playedLevel: brokenLevel, brokenLevel, nextRelevantLevel, entryPrice }, `Short wick touched next level ${nextRelevantLevel.price} but candle 3 did not close beyond it.`);
-  const normalTarget = long ? entryPrice + 10 : entryPrice - 10;
+  if (nextRelevantLevel) {
+    const nextPrice = nextRelevantLevel.price;
+    const c3BeyondNext = long ? candle3.close >= nextPrice : candle3.close <= nextPrice;
+    if (!c3BeyondNext) {
+      for (const [label, candle] of [['Candle 1', candle1], ['Candle 2', candle2], ['Candle 3', candle3]] as const) {
+        const wickTouches = long ? candle.high >= nextPrice : candle.low <= nextPrice;
+        if (wickTouches) {
+          return makeEvaluation(side, candles, input, [makeReason('WICK_TOUCHED_FORBIDDEN_NEXT_LEVEL', { candle: label, entryPrice, nextLevelPrice: nextPrice })], { playedLevel: brokenLevel, brokenLevel, nextRelevantLevel, entryPrice }, `${label} wick touched next level ${nextPrice} but candle 3 did not close beyond it.`);
+        }
+      }
+    }
+  }
+  const stopPoints = input.config.stopPoints;
+  const targetPoints = input.config.targetPoints;
+  const normalTarget = long ? entryPrice + targetPoints : entryPrice - targetPoints;
   const targetPrice = nextRelevantLevel && (long ? nextRelevantLevel.price < normalTarget : nextRelevantLevel.price > normalTarget)
     ? nextRelevantLevel.price
     : normalTarget;
   const tradePlan: TradePlan = {
     side,
     entryPrice,
-    stopPrice: long ? entryPrice - 10 : entryPrice + 10,
+    stopPrice: long ? entryPrice - stopPoints : entryPrice + stopPoints,
     targetPrice,
     playedLevel: brokenLevel,
     nextRelevantLevel,

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Badge } from './Badge';
+import { getEvaluations, getStatus } from '../domain/api-client';
 
 export function useStrategyState() {
   const [enabled, setEnabled] = useState<boolean>(false);
@@ -8,8 +9,60 @@ export function useStrategyState() {
   const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
   const [signalState, setSignalState] = useState<'none' | 'long' | 'short'>('none');
   const [lastEvaluated, setLastEvaluated] = useState<{ direction: string; accepted: boolean; timestamp: Date; entry: number; brokenLevel: number | null; nextLevel: number | null; ema9: number; ema21: number; breathingRoom: number | null; rejectionReason?: string } | null>(null);
-  const [lastAccepted, setLastAccepted] = useState<{ direction: string; timestamp: Date; entry: number; brokenLevel: number; nextLevel: number; reasoning: string } | null>(null);
-  const [lastRejected, setLastRejected] = useState<{ direction: string; timestamp: Date; entry: number; brokenLevel: number; nextLevel: number; reason: string } | null>(null);
+  const [lastAccepted, setLastAccepted] = useState<{ direction: string; timestamp: Date; entry: number; brokenLevel: number; nextLevel: number | null; reasoning: string } | null>(null);
+  const [lastRejected, setLastRejected] = useState<{ direction: string; timestamp: Date; entry: number; brokenLevel: number; nextLevel: number | null; reason: string } | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [status, evaluations] = await Promise.all([getStatus(), getEvaluations()]);
+        setEnabled(status.tradingEnabled);
+        setDryRun(!status.tradingEnabled);
+        
+        if (evaluations.length > 0) {
+          const latest = evaluations[evaluations.length - 1];
+          setLastEvaluated({
+            direction: latest.direction,
+            accepted: latest.result === 'ACCEPTED',
+            timestamp: new Date(latest.timestamp),
+            entry: latest.risk.entry ?? 0,
+            brokenLevel: latest.playedLevel,
+            nextLevel: latest.nextLevel,
+            ema9: latest.ema9 ?? 0,
+            ema21: latest.ema21 ?? 0,
+            breathingRoom: latest.breathingRoom,
+            rejectionReason: latest.result === 'REJECTED' ? latest.reason : undefined
+          });
+          
+          if (latest.result === 'ACCEPTED') {
+            setLastAccepted({
+              direction: latest.direction,
+              timestamp: new Date(latest.timestamp),
+              entry: latest.risk.entry ?? 0,
+              brokenLevel: latest.playedLevel ?? 0,
+              nextLevel: latest.nextLevel ?? 0,
+              reasoning: latest.reason
+            });
+          } else {
+            setLastRejected({
+              direction: latest.direction,
+              timestamp: new Date(latest.timestamp),
+              entry: latest.risk.entry ?? 0,
+              brokenLevel: latest.playedLevel ?? 0,
+              nextLevel: latest.nextLevel,
+              reason: latest.reason
+            });
+          }
+        }
+      } catch {
+        // Backend unavailable
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   return {
     enabled,
@@ -107,7 +160,7 @@ export function StrategyPanel() {
             <span>Direction: {lastAccepted.direction}</span>
             <span>Entry: {lastAccepted.entry.toFixed(2)}</span>
             <span>Broken Level: {lastAccepted.brokenLevel.toFixed(2)}</span>
-            <span>Next Level: {lastAccepted.nextLevel.toFixed(2)}</span>
+            <span>Next Level: {lastAccepted.nextLevel?.toFixed(2) ?? '—'}</span>
             <span>Reasoning: {lastAccepted.reasoning}</span>
           </div>
         ) : (

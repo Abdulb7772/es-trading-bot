@@ -1,14 +1,17 @@
-import type { Candle } from '@es-trading/shared';
+import type { Candle, Instrument } from '@es-trading/shared';
 import type { ExecutionProvider, MarketBar, MarketDataProvider, MarketEvent } from '@es-trading/market';
 import type { TradingDecision } from '@es-trading/shared';
 
 export const ES_SYMBOL = '/ES' as const;
+export const MES_SYMBOL = '/MES' as const;
+export const INSTRUMENTS = [ES_SYMBOL, MES_SYMBOL] as const;
 
 export interface TopstepXConfig {
   readonly baseUrl: string;
   readonly username: string;
   readonly apiKey: string;
   readonly accountId: string;
+  readonly symbol?: Instrument;
   readonly contractId?: string;
   readonly pollMilliseconds?: number;
   readonly dryRun?: boolean;
@@ -71,14 +74,14 @@ export interface TopstepXAdapter {
   readonly emergencyFlatten: () => Promise<void>;
 }
 
-function assertEs(value: string | undefined, name: string): void {
-  if (value !== undefined && value !== ES_SYMBOL && !value.includes('E-mini S&P 500')) {
-    throw new Error(`${name} must identify /ES; received ${value}.`);
+function assertValidSymbol(value: string | undefined, name: string): void {
+  if (value !== undefined && value !== ES_SYMBOL && value !== MES_SYMBOL && !value.includes('E-mini S&P 500')) {
+    throw new Error(`${name} must identify /ES or /MES; received ${value}.`);
   }
 }
 
-function assertEsSymbol(value: string | undefined, name: string): void {
-  if (value !== ES_SYMBOL) throw new Error(`${name} must be /ES; received ${value ?? 'missing'}.`);
+function assertSymbol(value: string | undefined, expected: Instrument, name: string): void {
+  if (value !== expected) throw new Error(`${name} must be ${expected}; received ${value ?? 'missing'}.`);
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -102,14 +105,20 @@ function numberField(record: Record<string, unknown>, key: string): number {
 export class TopstepXRestAdapter implements TopstepXAdapter {
   private token: string | null = null;
   private contract: TopstepXContract | null = null;
+  private readonly symbol: Instrument;
 
   constructor(private readonly config: TopstepXConfig, private readonly http: TopstepXHttp = globalThis.fetch.bind(globalThis)) {
-    assertEs(config.contractId, 'contractId');
+    this.symbol = config.symbol ?? ES_SYMBOL;
+    assertValidSymbol(config.contractId, 'contractId');
     if (config.accountId.trim() === '') throw new Error('TopstepX accountId is required.');
   }
 
   get resolvedContractId(): string {
     return this.requireContract().id;
+  }
+
+  get resolvedSymbol(): Instrument {
+    return this.symbol;
   }
 
   async connect(): Promise<void> {
@@ -123,7 +132,7 @@ export class TopstepXRestAdapter implements TopstepXAdapter {
     const account = accounts.find((candidate) => String(candidate.id) === this.config.accountId);
     if (!account || !account.simulated || !account.canTrade || !account.isVisible) throw new Error('Configured TopstepX account is not an eligible visible Practice account.');
     this.contract = await this.resolveEsContract();
-    if (this.config.contractId && this.contract.id !== this.config.contractId) throw new Error('Configured TopstepX contract is not the resolved /ES contract.');
+    if (this.config.contractId && this.contract.id !== this.config.contractId) throw new Error(`Configured TopstepX contract is not the resolved ${this.symbol} contract.`);
   }
 
   async disconnect(): Promise<void> {
@@ -169,14 +178,14 @@ export class TopstepXRestAdapter implements TopstepXAdapter {
       low: numberField(bar, 'l'),
       close: numberField(bar, 'c'),
       volume: bar.v === undefined ? undefined : numberField(bar, 'v'),
-      symbol: bar.symbol === undefined ? ES_SYMBOL : String(bar.symbol),
+      symbol: bar.symbol === undefined ? this.symbol : String(bar.symbol),
       contractId: bar.contractId === undefined ? contract.id : String(bar.contractId)
     }));
   }
 
   async placeBracketOrder(request: TopstepXOrderRequest): Promise<string> {
     const contract = this.requireContract();
-    if (request.quantity !== 1 || request.stopPoints !== 10 || request.targetPoints !== 10) throw new Error('The active /ES strategy only permits one contract with a 10-point stop and 1:1 target.');
+    if (request.quantity !== 1) throw new Error(`The active ${this.symbol} strategy only permits one contract per trade.`);
     const result = await this.request('/api/Order/place', {
       accountId: this.config.accountId,
       contractId: contract.id,
@@ -240,16 +249,21 @@ export class TopstepXRestAdapter implements TopstepXAdapter {
   }
 
   private async resolveEsContract(): Promise<TopstepXContract> {
-    const result = await this.request('/api/Contract/search', { searchText: 'ES', live: true });
+    const searchText = this.symbol === MES_SYMBOL ? 'MES' : 'ES';
+    const result = await this.request('/api/Contract/search', { searchText, live: true });
     const contracts = responseItems(result, 'contracts').filter((contract) => {
       const description = String(contract.description ?? '');
       const symbolId = String(contract.symbolId ?? '');
       const name = String(contract.name ?? '');
-      return Boolean(contract.activeContract) && symbolId === 'F.US.EP' && name.startsWith('ES') && !name.startsWith('MES');
+      if (!contract.activeContract) return false;
+      if (this.symbol === MES_SYMBOL) {
+        return symbolId === 'F.US.MC' && name.startsWith('MES');
+      }
+      return symbolId === 'F.US.EP' && name.startsWith('ES') && !name.startsWith('MES');
     });
-    if (contracts.length !== 1) throw new Error(`TopstepX must resolve exactly one active standard /ES contract; received ${contracts.length}.`);
+    if (contracts.length !== 1) throw new Error(`TopstepX must resolve exactly one active ${this.symbol} contract; received ${contracts.length}.`);
     const contract = contracts[0];
-    return { id: String(contract.id), symbol: ES_SYMBOL, symbolId: String(contract.symbolId), description: String(contract.description), tickSize: numberField(contract, 'tickSize'), activeContract: true };
+    return { id: String(contract.id), symbol: this.symbol, symbolId: String(contract.symbolId), description: String(contract.description), tickSize: numberField(contract, 'tickSize'), activeContract: true };
   }
 
   private requireContract(): TopstepXContract {
@@ -260,7 +274,7 @@ export class TopstepXRestAdapter implements TopstepXAdapter {
   private toCandle(bar: Record<string, unknown>): Candle {
     const timestamp = new Date(String(bar.t));
     if (!Number.isFinite(timestamp.getTime())) throw new Error('TopstepX returned an invalid bar timestamp.');
-    return { timestamp, open: numberField(bar, 'o'), high: numberField(bar, 'h'), low: numberField(bar, 'l'), close: numberField(bar, 'c'), volume: bar.v === undefined ? undefined : numberField(bar, 'v'), symbol: ES_SYMBOL, timeframe: '15m', isClosed: true };
+    return { timestamp, open: numberField(bar, 'o'), high: numberField(bar, 'h'), low: numberField(bar, 'l'), close: numberField(bar, 'c'), volume: bar.v === undefined ? undefined : numberField(bar, 'v'), symbol: this.symbol, timeframe: '15m', isClosed: true };
   }
 }
 
@@ -291,12 +305,12 @@ export class TopstepXPollingMarketProvider implements MarketDataProvider {
     try {
       const bars = await this.adapter.recentBars(3);
       for (const bar of bars) {
-        assertEsSymbol(bar.symbol, 'realtime bar symbol');
+        assertSymbol(bar.symbol, this.adapter.resolvedSymbol, 'realtime bar symbol');
         const timestamp = new Date(bar.timestamp);
         if (!Number.isFinite(timestamp.getTime()) || timestamp.getTime() <= this.lastTimestamp) continue;
-        if (bar.contractId && bar.contractId !== this.adapterContractId) throw new Error('TopstepX realtime bar is not the resolved /ES contract.');
+        if (bar.contractId && bar.contractId !== this.adapterContractId) throw new Error(`TopstepX realtime bar is not the resolved ${this.adapter.resolvedSymbol} contract.`);
         this.lastTimestamp = timestamp.getTime();
-        this.publish({ type: 'bar', id: `topstepx-${this.lastTimestamp}`, bar: { instrument: ES_SYMBOL, timestamp, open: bar.open, high: bar.high, low: bar.low, close: bar.close, volume: bar.volume ?? 0 } });
+        this.publish({ type: 'bar', id: `topstepx-${this.lastTimestamp}`, bar: { instrument: this.adapter.resolvedSymbol, timestamp, open: bar.open, high: bar.high, low: bar.low, close: bar.close, volume: bar.volume ?? 0 } });
       }
     } catch (error) { this.publish({ type: 'error', at: new Date(), message: error instanceof Error ? error.message : 'TopstepX market polling failed.' }); }
   }
@@ -338,8 +352,8 @@ export class TopstepXExecutionProvider implements ExecutionProvider {
   }
 
   async onMarketBar(bar: MarketBar): Promise<void> {
-    assertEsSymbol(bar.instrument, 'execution bar instrument');
-    if (bar.instrument !== ES_SYMBOL || !this.activePlan?.nextRelevantLevel || !this.positionOpen) return;
+    assertSymbol(bar.instrument, this.adapter.resolvedSymbol, 'execution bar instrument');
+    if (bar.instrument !== this.adapter.resolvedSymbol || !this.activePlan?.nextRelevantLevel || !this.positionOpen) return;
     const level = this.activePlan.nextRelevantLevel.price;
     const reached = this.activePlan.side === 'LONG' ? bar.high >= level : bar.low <= level;
     if (!reached) return;

@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
   export const ES_SYMBOL = '/ES' as const;
-  export type Instrument = typeof ES_SYMBOL;
+  export const MES_SYMBOL = '/MES' as const;
+  export type Instrument = typeof ES_SYMBOL | typeof MES_SYMBOL;
+  export const INSTRUMENTS = [ES_SYMBOL, MES_SYMBOL] as const;
 
   export const timeframeSchema = z.string().regex(/^\d+(s|m|h|d)$/, 'Use a timeframe such as 1m or 15m.');
   export type Timeframe = z.infer<typeof timeframeSchema>;
@@ -22,7 +24,7 @@ import { z } from 'zod';
     low: finiteNumber,
     close: finiteNumber,
     volume: finiteNumber.nonnegative().optional(),
-    symbol: z.literal(ES_SYMBOL),
+    symbol: z.enum([ES_SYMBOL, MES_SYMBOL]),
     timeframe: z.literal('15m'),
     isClosed: z.boolean()
   }).superRefine((candle, context) => {
@@ -57,7 +59,7 @@ import { z } from 'zod';
   export type LevelsConfig = z.infer<typeof levelsConfigSchema>;
 
   export const strategyConfigSchema = z.object({
-    symbol: z.literal(ES_SYMBOL),
+    symbol: z.enum([ES_SYMBOL, MES_SYMBOL]),
     timeframe: z.literal('15m'),
     emaFastPeriod: z.number().int().positive().default(9),
     emaSlowPeriod: z.number().int().positive().default(21),
@@ -121,7 +123,7 @@ import { z } from 'zod';
     MALFORMED_LEVELS: 'The supplied support/resistance levels are malformed.',
     NO_RELEVANT_SUPPORT_RESISTANCE_LEVEL: 'No relevant manual support/resistance level is available.',
     CANDLE_NOT_CLOSED: 'Every candle supplied to the strategy must be completed.',
-    INVALID_INSTRUMENT: 'Every candle supplied to the strategy must be an /ES candle.'
+    INVALID_INSTRUMENT: 'Every candle supplied to the strategy must be an /ES or /MES candle.'
   };
 
   export interface TradePlan {

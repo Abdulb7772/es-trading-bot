@@ -2,26 +2,34 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from './Badge';
+import { getStatus } from '../domain/api-client';
 
 export function useConnectionStatus() {
-  const [backendStatus, setBackendStatus] = useState<'online' | 'offline'>('online');
+  const [backendStatus, setBackendStatus] = useState<'online' | 'offline'>('offline');
   const [topstepXStatus, setTopstepXStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [practiceAccount, setPracticeAccount] = useState<boolean | null>(null);
   const [marketDataStatus, setMarketDataStatus] = useState<'disconnected' | 'connected'>('disconnected');
   const [lastMarketTimestamp, setLastMarketTimestamp] = useState<Date | null>(null);
   const router = useRouter();
 
-  // Simulate status updates for local development
   useEffect(() => {
-    const interval = setInterval(() => {
-      // In production, this would connect to the actual backend/WebSocket
-      setBackendStatus('online');
-      setTopstepXStatus('connected');
-      setPracticeAccount(true);
-      setMarketDataStatus('connected');
-      setLastMarketTimestamp(new Date());
-    }, 3000);
+    const checkStatus = async () => {
+      try {
+        const status = await getStatus();
+        setBackendStatus('online');
+        setTopstepXStatus(status.tradingEnabled ? 'connected' : 'disconnected');
+        setPracticeAccount(status.tradingEnabled);
+        setMarketDataStatus(status.engine === 'operational' ? 'connected' : 'disconnected');
+        setLastMarketTimestamp(new Date(status.lastHeartbeat));
+      } catch {
+        setBackendStatus('offline');
+        setTopstepXStatus('disconnected');
+        setMarketDataStatus('disconnected');
+      }
+    };
 
+    checkStatus();
+    const interval = setInterval(checkStatus, 5000);
     return () => clearInterval(interval);
   }, []);
 
