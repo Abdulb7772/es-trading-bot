@@ -76,7 +76,13 @@ export default function EvaluationsPage() {
   const [search, setSearch] = useState('');
   const [dateFilter, setDateFilter] = useState('');
 
-  useEffect(() => { getEvaluations().then(setEvaluations).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
+  useEffect(() => {
+    let active = true;
+    const load = () => getEvaluations().then((data) => { if (active) setEvaluations(data); }).catch(() => { if (active) setError(true); }).finally(() => { if (active) setLoading(false); });
+    load();
+    const interval = setInterval(load, 10_000);
+    return () => { active = false; clearInterval(interval); };
+  }, []);
 
   const filtered = useMemo(() => evaluations.filter((evaluation) => { const haystack = `${evaluation.id} ${evaluation.reason} ${evaluation.reasonCode} ${evaluation.direction} ${evaluation.result}`.toLowerCase(); return (resultFilter === 'ALL' || evaluation.result === resultFilter) && (directionFilter === 'ALL' || evaluation.direction === directionFilter) && (reasonFilter === 'All reasons' || evaluation.reasonCode === reasonFilter) && (!dateFilter || evaluation.timestamp.startsWith(dateFilter)) && (!search || haystack.includes(search.toLowerCase())); }), [evaluations, resultFilter, directionFilter, reasonFilter, dateFilter, search]);
 

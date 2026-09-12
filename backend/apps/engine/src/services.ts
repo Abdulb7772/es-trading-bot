@@ -43,10 +43,13 @@ export interface BackendApplicationServices {
   validateLevels(input: unknown): { valid: boolean; levels: number[]; error?: string };
   getEvaluations(): readonly StrategyEvaluation[];
   getEvaluation(id: string): StrategyEvaluation | undefined;
+  recordEvaluation(evaluation: StrategyEvaluation): void;
   getTrades(): readonly Trade[];
   getTrade(id: string): Trade | undefined;
   getDailyState(): TradingDayState;
   getLogs(): readonly LogEntry[];
+  recordLog(entry: LogEntry): void;
+  recordTrade(trade: Trade): void;
   getSimulationFixtures(): readonly z.infer<typeof fixtureSchema>[];
   runSimulation(input: SimulationRequest): Promise<z.infer<typeof simulationResultSchema>>;
 }
@@ -134,6 +137,7 @@ export function createBackendApplicationServices(options: ApplicationServiceOpti
     validateLevels: (input) => { try { const parsed = levelsRequestSchema.parse(input); return { valid: true, levels: [...normalizeLevels(parsed.levels)] }; } catch (error) { return { valid: false, levels: [], error: error instanceof Error ? error.message : 'Invalid levels.' }; } },
     getEvaluations: () => evaluations.map((evaluation) => strategyEvaluationSchema.parse(evaluation)),
     getEvaluation: (id) => evaluations.find((evaluation) => evaluation.id === id),
+    recordEvaluation: (evaluation) => { evaluations.push(evaluation); },
     getTrades: () => [...trades],
     getTrade: (id) => trades.find((trade) => trade.id === id),
     getDailyState: () => {
@@ -149,6 +153,8 @@ export function createBackendApplicationServices(options: ApplicationServiceOpti
       });
     },
     getLogs: () => logs.map((log) => logEntrySchema.parse(log)),
+    recordLog: (entry) => { logs.push(entry); },
+    recordTrade: (trade) => { trades.push(trade); },
     getSimulationFixtures: () => [fixtureSchema.parse({ id: 'local-fixture', name: 'Local replay', description: 'Built-in deterministic /ES replay fixture.' })],
     runSimulation: async (input) => {
       simulationRequestSchema.parse(input);

@@ -29,7 +29,13 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [tradingEnabled, setTradingEnabled] = useState(false);
 
-  useEffect(() => { getDashboardData().then((result) => { setData(result); setTradingEnabled(result.system.tradingEnabled); }).catch((reason: unknown) => setError(apiErrorMessage(reason))); }, []);
+  useEffect(() => {
+    let active = true;
+    const load = () => getDashboardData().then((result) => { if (active) { setData(result); setTradingEnabled(result.system.tradingEnabled); } }).catch((reason: unknown) => { if (active) setError(apiErrorMessage(reason)); });
+    load();
+    const interval = setInterval(load, 10_000);
+    return () => { active = false; clearInterval(interval); };
+  }, []);
 
   return (
     <div className="dashboard-shell">

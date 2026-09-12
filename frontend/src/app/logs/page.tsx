@@ -17,7 +17,13 @@ export default function LogsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  useEffect(() => { getLogs().then(setLogs).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
+  useEffect(() => {
+    let active = true;
+    const load = () => getLogs().then((data) => { if (active) setLogs(data); }).catch(() => { if (active) setError(true); }).finally(() => { if (active) setLoading(false); });
+    load();
+    const interval = setInterval(load, 10_000);
+    return () => { active = false; clearInterval(interval); };
+  }, []);
   const filtered = useMemo(() => logs.filter((log) => { const haystack = `${log.event} ${log.message} ${log.evaluationId ?? ''} ${log.tradeId ?? ''} ${log.correlationId}`.toLowerCase(); return (severity === 'ALL' || log.severity === severity) && (component === 'ALL' || log.component === component) && (!search || haystack.includes(search.toLowerCase())); }), [logs, severity, component, search]);
 
   return (
